@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://code.jquery.com/jquery-1.7.2.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+</head>
+
+<body>
+    <div id="popup-table" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <h2 id="popup-table-header">Header</h2>
+            </div>
+            <div class="modal-body">
+                <table class="ticket-table">
+                    <thead>
+                        <tr>
+                            <th style='width:10%'>Customer</th>
+                            <th style='width:50%'>Title</th>
+                            <th style='width:10%'>Last Updated</th>
+                            <th style='width:10%'>Assigned</th>
+                            <th style='width:10%'>Status</th>
+                            <th style='width:10%'>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticket-table">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="data-container">
+        <span class="data-container-header">
+            Mojo Information
+        </span>
+        <div class="statistic-container clickable" id="open_tickets_container"
+            onclick="openPopupTable('Open Tickets', {{open_tickets_json}})">
+            <span class="statistic-container-header">
+                Open Tickets
+            </span>
+            <span class="statistic-container-data" id="unassigned_tickets" style="color:{{open_tickets_color}};">
+                {{open_tickets}}
+            </span>
+        </div>
+        <div class="statistic-container clickable" id="unassigned_tickets_container"
+            onclick="openPopupTable('Unassigned Tickets', {{unassigned_tickets_json}})">
+            <span class="statistic-container-header">
+                Unassigned Tickets
+            </span>
+            <span class="statistic-container-data" id="unassigned_tickets" style="color:{{unassigned_tickets_color}};">
+                {{unassigned_tickets}}
+            </span>
+        </div>
+        <div class="statistic-container clickable" id="inactive_tickets_container"
+            onclick="openPopupTable('Tickets with no update in 18+ Days', {{inactive_tickets_json}})">
+            <span class="statistic-container-header">
+                Inactive Tickets
+            </span>
+            <span class="statistic-container-data" id="inactive_tickets" style="color:{{inactive_tickets_color}};">
+                {{inactive_tickets}}
+            </span>
+        </div>
+        <div class="statistic-container clickable" id="waiting_tickets_container"
+            onclick="openPopupTable('Tickets On Hold or Waiting for Customer', {{waiting_tickets_json}})">
+            <span class="statistic-container-header">
+                On Hold
+            </span>
+            <span class="statistic-container-data" id="waiting_tickets" style="color:{{waiting_tickets_color}};">
+                {{waiting_tickets}}
+            </span>
+        </div>
+        <div class="statistic-container">
+            <span class="statistic-container-header">
+                Kill Ratio (24h)
+            </span>
+            <span class="statistic-container-data">
+                {{ kill_ratio_1d }}
+            </span>
+        </div>
+        <div class="statistic-container">
+            <span class="statistic-container-header">
+                Kill Ratio (30d)
+            </span>
+            <span class="statistic-container-data">
+                {{ kill_ratio_30d }}
+            </span>
+        </div>
+        <script>
+            var modal = document.getElementById("popup-table");
+            var modalHeader = document.getElementById("popup-table-header");
+            var modalTable = document.getElementById("ticket-table");
+
+            var span = document.getElementsByClassName("close")[0];
+
+            var mojoClients = JSON.parse({{ users | tojson | safe}});
+            var mojoGroups = JSON.parse({{ groups | tojson | safe}});
+
+            var getClient = function(id) {
+                for (var obj of mojoClients) {
+                    if (obj.id == id) {
+                        return obj;
+                    }
+                }
+            }
+
+            var getGroup = function(id) {
+                for (var obj of mojoGroups) {
+                    if (obj.id == id) {
+                        console.log(obj)
+                        return obj;
+                    }
+                }
+            }
+
+            function openPopupTable(title, data) {
+                modalHeader.innerHTML = title;
+
+                var table = "";
+
+                for (var obj of data) {
+                    if (obj.status_id < 60) {
+                        var statusLoc;
+                        var priorityLoc;
+
+                        if (obj.status_id == 10) {
+                            statusLoc = "New";
+                        } else if (obj.status_id == 20) {
+                            statusLoc = "In Progress";
+                        } else if (obj.status_id == 30) {
+                            statusLoc = "On Hold";
+                        } else if (obj.status_id == 40) {
+                            statusLoc = "<span style='color:mediumpurple'>Info. Requested</span>";
+                        } else if (obj.status_id == 50) {
+                            statusLoc = "Solved";
+                        }
+
+                        if (obj.priority_id == 10) {
+                            priorityLoc = "Emergency";
+                        } else if (obj.priority_id == 20) {
+                            priorityLoc = "Urgent";
+                        } else if (obj.priority_id == 30) {
+                            priorityLoc = "Normal";
+                        } else if (obj.priority_id == 40) {
+                            priorityLoc = "Low";
+                        }
+
+                        var agent = "";
+                        if (obj.assigned_to_id != null) {
+                            agent = getClient(obj.assigned_to_id);
+                        } else {
+                            agent = { 'first_name': '<i style=\"color:red\">Unassigned</i>', 'last_name': '' };
+                        }
+                        var customer = getGroup(obj.company_id);
+                        table +=
+                            "<tr><td><div class='popuptable-item'>" + customer.name +
+                            "</div></td><td><div class='popuptable-item'><a href='https://ridgelineitsolutions.mojohelpdesk.com/ma/#/tickets/" + obj.id + "' target='blank'>" + obj.title +
+                            "</a></div></td><td><div class='popuptable-item'>" + timeSince(new Date(obj.updated_on).getTime()) +
+                            "</div></td><td><div class='popuptable-item'>" + agent.first_name + " " + agent.last_name +
+                            "</div></td><td><div class='popuptable-item'>" + statusLoc +
+                            "</div></td><td><div class='popuptable-item'>" + priorityLoc +
+                            "</div></td></tr>";
+                    }
+                }
+
+                modalTable.innerHTML = table;
+
+                modal.style.display = "block";
+            }
+
+            span.onclick = function () {
+                modal.style.display = "none";
+            }
+
+            window.onclick = function (event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+            function timeSince(date) {
+
+                var seconds = Math.floor((new Date() - date) / 1000);
+
+                var interval = seconds / 31536000;
+
+                if (interval > 1) {
+                    return Math.floor(interval) + " years ago";
+                }
+                interval = seconds / 2592000;
+                if (interval > 1) {
+                    return Math.floor(interval) + " months ago";
+                }
+                interval = seconds / 86400;
+                if (interval > 1) {
+                    return Math.floor(interval) + " days ago";
+                }
+                interval = seconds / 3600;
+                if (interval > 1) {
+                    return Math.floor(interval) + " hours ago";
+                }
+                interval = seconds / 60;
+                if (interval > 1) {
+                    return Math.floor(interval) + " minutes ago";
+                }
+                return Math.floor(seconds) + " seconds ago";
+            }
+        </script>
+    </div>
+    <div class="data-container">
+        <span class="data-container-header">
+            Kaseya Information
+        </span>
+    </div>
+</body>
+
+</html>

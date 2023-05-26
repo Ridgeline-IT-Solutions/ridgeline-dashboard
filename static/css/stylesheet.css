@@ -1,0 +1,158 @@
+html {
+    background-color: #202020;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #cacaca;
+}
+
+body {
+    margin: 0;
+}
+
+.data-container {
+    border: 1px solid #cacaca;
+    margin: 10px;
+    padding: 5px;
+    display: inline-grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.data-container-header {
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    grid-column: 1 / -1;
+}
+
+.statistic-container {
+    border: 1px solid #404040;
+    margin: 5px;
+    padding: 5px;
+    display: inline-grid;
+}
+
+.clickable:hover {
+    background-color: #404040;
+    -webkit-animation-name: fadeBg;
+    -webkit-animation-duration: 0.25s;
+    animation-name: fadeBg;
+    animation-duration: 0.25s;
+    cursor: pointer;
+}
+
+.statistic-container-header {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.statistic-container-data {
+    font-size: 60px;
+    font-weight: bold;
+    text-align: center;
+}
+
+@-webkit-keyframes slideIn {
+    from {bottom: -300px; opacity: 0} 
+    to {bottom: 0; opacity: 1}
+}
+  
+@keyframes slideIn {
+    from {bottom: -300px; opacity: 0}
+    to {bottom: 0; opacity: 1}
+}
+  
+@-webkit-keyframes fadeIn {
+    from {opacity: 0} 
+    to {opacity: 1}
+}
+  
+@keyframes fadeIn {
+    from {opacity: 0} 
+    to {opacity: 1}
+}
+
+@-webkit-keyframes fadeBg {
+    from {background-color: #202020} 
+    to {background-color: #404040}
+}
+
+@keyframes fadeBg {
+    from {background-color: #202020} 
+    to {background-color: #404040}
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: rgba(0,0,0,0.4);
+    -webkit-animation-name: fadeIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: fadeIn;
+    animation-duration: 0.4s;
+}
+  
+.modal-content {
+    position: fixed;
+    background-color: #202020;
+    width: 90%;
+    height: 90%;
+    bottom:0;
+    -webkit-animation-name: slideIn;
+    -webkit-animation-duration: 0.4s;
+    animation-name: slideIn;
+    animation-duration: 0.4s;
+    margin-left: 5%;
+    overflow: hidden;
+}
+
+.close {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+  
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+  
+.modal-header {
+    padding: 2px 16px;
+    background-color: #245824;
+    color: white;
+}
+  
+.modal-body {
+    padding: 2px 16px;
+    display: flex;
+    overflow-y: scroll;
+    height: 91%;
+}
+  
+.modal-footer {
+    padding: 2px 16px;
+    background-color: #245824;
+    color: white;
+}
+
+.ticket-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.ticket-table tr{
+    height: 50px;
+    border-bottom: 1px dashed #cacaca;
+}
+
+.ticket-table a {
+    color: #cacaca;
+}
