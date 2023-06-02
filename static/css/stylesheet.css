@@ -6,11 +6,13 @@ html {
 
 body {
     margin: 0;
+    display: flex;
+    padding: 10px;
+    gap: 10px;
 }
 
 .data-container {
     border: 1px solid #cacaca;
-    margin: 10px;
     padding: 5px;
     display: inline-grid;
     grid-template-columns: repeat(4, 1fr);
@@ -28,6 +30,7 @@ body {
     margin: 5px;
     padding: 5px;
     display: inline-grid;
+    user-select: none;
 }
 
 .clickable:hover {
@@ -155,4 +158,8 @@ body {
 
 .ticket-table a {
     color: #cacaca;
+}
+
+.popup-table-item {
+    text-align: center;
 }

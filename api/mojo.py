@@ -9,7 +9,7 @@ HEADERS = {'Accept': 'application/json', 'Content-Type': 'application/json'}
 
 load_dotenv()
 
-def get_all_tickets():
+def get_all_tickets() -> dict:
     request = ENDPOINT + "tickets/search?per_page=100&sf=created_on&r=0&access_key=" + os.getenv('MOJO_APIKEY')
     tickets = {}
     for i in range(1, 100):
@@ -22,7 +22,7 @@ def get_all_tickets():
                 tickets[ticket['id']] = ticket
     return tickets
 
-def get_all_users():
+def get_all_users() -> dict:
     request = ENDPOINT + "users?per_page=100&access_key=" + os.getenv('MOJO_APIKEY')
     users = {}
     for i in range(1, 100):
@@ -34,7 +34,7 @@ def get_all_users():
                 users[user['id']] = user
     return users
 
-def get_all_groups():
+def get_all_groups() -> dict:
     request = ENDPOINT + "groups/?per_page=100&access_key=" + os.getenv('MOJO_APIKEY')
     groups = {}
     for i in range(1, 100):
@@ -69,8 +69,19 @@ def get_all_groups():
 #             tickets += this_page.json()
 #     return tickets
 
-def get_tickets_updated_within_day(days: int):
-    """Get all tickets updated within the last `days` day(s)"""
+def get_tickets_updated_within_day(days: int) -> list:
+    """
+    Get all tickets updated within the last `days` day(s)
+
+    Args:
+        None
+
+    Returns:
+        `list` of tickets
+
+    Raises:
+        None
+    """
     request = ENDPOINT + f"tickets/search?query=updated_on:[{datetime.isoformat(datetime.utcnow() - timedelta(days = days))} TO *]&per_page=100&sf=updated_on&r=0&access_key=" + os.getenv('MOJO_APIKEY')
     tickets = []
     for i in range(1, 100):
@@ -82,7 +93,18 @@ def get_tickets_updated_within_day(days: int):
     return tickets
 
 def get_cache():
-    """Get ALL tickets, clients, and companies from mojo and cache. Should only be run once, afterwards use update_cache."""
+    """
+    Get all tickets, clients, and companies from mojo and cache. Should only be run once, afterwards use update_cache.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     all_tickets = get_all_tickets()
     with open('cache/mojo/tickets.json', 'w+') as f:
         json.dump(all_tickets, f)
@@ -110,24 +132,21 @@ def update_cache(days = 1):
     with open('cache/mojo/tickets.json', 'w+') as f:
         json.dump(tickets, f)
 
-#get_cache()
-#update_cache()
-
-def get_cached_tickets():
+def get_cached_tickets() -> list:
     tickets = []
     with open('cache/mojo/tickets.json', 'r') as f:
         tickets = list(json.load(f).values())
     
     return tickets
     
-def get_cached_users():
+def get_cached_users() -> list:
     users = []
     with open('cache/mojo/users.json', 'r') as f:
         users = list(json.load(f).values())
     
     return users
     
-def get_cached_groups():
+def get_cached_groups() -> list:
     groups = []
     with open('cache/mojo/groups.json', 'r') as f:
         groups = list(json.load(f).values())

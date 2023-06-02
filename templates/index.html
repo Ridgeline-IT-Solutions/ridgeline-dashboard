@@ -16,7 +16,7 @@
             <div class="modal-body">
                 <table class="ticket-table">
                     <thead>
-                        <tr>
+                        <tr id="ticket-table-head">
                             <th style='width:10%'>Customer</th>
                             <th style='width:50%'>Title</th>
                             <th style='width:10%'>Last Updated</th>
@@ -32,44 +32,68 @@
             </div>
         </div>
     </div>
+
+    <script>
+    function conditionalColor(value, red, yellow, invert = false) {
+        out = "<span style='color:";
+        if (invert) {
+            if (value <= red) {
+                out += "red;'>"+value+"</span>";
+            } else if (value <= yellow) {
+                out += "yellow;'>"+value+"</span>";
+            } else {
+                out += "green;'>"+value+"</span>";
+            }
+        } else {
+            if (value >= red) {
+                out += "red;'>"+value+"</span>";
+            } else if (value >= yellow) {
+                out += "yellow;'>"+value+"</span>";
+            } else {
+                out += "green;'>"+value+"</span>";
+            }
+        }
+        return out;
+    }
+    </script>
     <div class="data-container">
         <span class="data-container-header">
             Mojo Information
         </span>
         <div class="statistic-container clickable" id="open_tickets_container"
-            onclick="openPopupTable('Open Tickets', {{open_tickets_json}})">
+            onclick="openTicketTable('Open Tickets', {{open_tickets_json}})">
             <span class="statistic-container-header">
                 Open Tickets
             </span>
-            <span class="statistic-container-data" id="unassigned_tickets" style="color:{{open_tickets_color}};">
-                {{open_tickets}}
+            <span class="statistic-container-data" id="open_tickets">
+                <script>document.write(conditionalColor({{open_tickets}}, 50, 25));</script>
             </span>
         </div>
         <div class="statistic-container clickable" id="unassigned_tickets_container"
-            onclick="openPopupTable('Unassigned Tickets', {{unassigned_tickets_json}})">
+            onclick="openTicketTable('Unassigned Tickets', {{unassigned_tickets_json}})">
             <span class="statistic-container-header">
                 Unassigned Tickets
             </span>
-            <span class="statistic-container-data" id="unassigned_tickets" style="color:{{unassigned_tickets_color}};">
-                {{unassigned_tickets}}
+            <span class="statistic-container-data" id="unassigned_tickets">
+                <script>document.write(conditionalColor({{unassigned_tickets}}, 5, 2));</script>
             </span>
         </div>
         <div class="statistic-container clickable" id="inactive_tickets_container"
-            onclick="openPopupTable('Tickets with no update in 18+ Days', {{inactive_tickets_json}})">
+            onclick="openTicketTable('Tickets with no update in 15+ Days', {{inactive_tickets_json}})">
             <span class="statistic-container-header">
                 Inactive Tickets
             </span>
-            <span class="statistic-container-data" id="inactive_tickets" style="color:{{inactive_tickets_color}};">
-                {{inactive_tickets}}
+            <span class="statistic-container-data" id="inactive_tickets">
+                <script>document.write(conditionalColor({{inactive_tickets}}, 8, 4));</script>
             </span>
         </div>
         <div class="statistic-container clickable" id="waiting_tickets_container"
-            onclick="openPopupTable('Tickets On Hold or Waiting for Customer', {{waiting_tickets_json}})">
+            onclick="openTicketTable('Tickets On Hold or Waiting for Customer', {{waiting_tickets_json}})">
             <span class="statistic-container-header">
                 On Hold
             </span>
-            <span class="statistic-container-data" id="waiting_tickets" style="color:{{waiting_tickets_color}};">
-                {{waiting_tickets}}
+            <span class="statistic-container-data" id="waiting_tickets">
+                <script>document.write(conditionalColor({{waiting_tickets}}, 20, 10));</script>
             </span>
         </div>
         <div class="statistic-container">
@@ -77,7 +101,7 @@
                 Kill Ratio (24h)
             </span>
             <span class="statistic-container-data">
-                {{ kill_ratio_1d }}
+                <script>document.write(conditionalColor({{kill_ratio_1d}}, 0.8, 1.2, true));</script>
             </span>
         </div>
         <div class="statistic-container">
@@ -85,7 +109,15 @@
                 Kill Ratio (30d)
             </span>
             <span class="statistic-container-data">
-                {{ kill_ratio_30d }}
+                <script>document.write(conditionalColor({{kill_ratio_30d}}, 0.8, 1.2, true));</script>
+            </span>
+        </div>
+        <div class="statistic-container" style="grid-column: 3 / 5;">
+            <span class="statistic-container-header">
+                Average Turnaround
+            </span>
+            <span class="statistic-container-data">
+                {{avg_turnaround}}
             </span>
         </div>
         <script>
@@ -97,8 +129,9 @@
 
             var mojoClients = JSON.parse({{ users | tojson | safe}});
             var mojoGroups = JSON.parse({{ groups | tojson | safe}});
+            var all_agents = JSON.parse({{ all_agents | tojson | safe}});
 
-            var getClient = function(id) {
+            var getClient = function (id) {
                 for (var obj of mojoClients) {
                     if (obj.id == id) {
                         return obj;
@@ -106,7 +139,7 @@
                 }
             }
 
-            var getGroup = function(id) {
+            var getGroup = function (id) {
                 for (var obj of mojoGroups) {
                     if (obj.id == id) {
                         console.log(obj)
@@ -115,7 +148,7 @@
                 }
             }
 
-            function openPopupTable(title, data) {
+            function openTicketTable(title, data) {
                 modalHeader.innerHTML = title;
 
                 var table = "";
@@ -165,6 +198,14 @@
                     }
                 }
 
+                document.getElementById('ticket-table-head').innerHTML =
+                    "<th style='width:10%'>Customer</th>" +
+                    "<th style='width:50%'>Title</th>" +
+                    "<th style='width:10%'>Last Updated</th>" +
+                    "<th style='width:10%'>Assigned</th>" +
+                    "<th style='width:10%'>Status</th>" +
+                    "<th style='width:10%'>Priority</th>";
+
                 modalTable.innerHTML = table;
 
                 modal.style.display = "block";
@@ -187,6 +228,9 @@
                 var interval = seconds / 31536000;
 
                 if (interval > 1) {
+                    if (interval > 5) {
+                        return "Never or Unknown"
+                    }
                     return Math.floor(interval) + " years ago";
                 }
                 interval = seconds / 2592000;
@@ -213,6 +257,169 @@
         <span class="data-container-header">
             Kaseya Information
         </span>
+        <div class="statistic-container clickable" id="inactive_agents_container"
+            onclick="openInactiveAgentTable('Inactive Agents (last check in 15+ days ago)', {{inactive_agents_json}})">
+            <span class="statistic-container-header">
+                Inactive Agents
+            </span>
+            <span class="statistic-container-data" id="inactive_agents">
+                <script>document.write(conditionalColor({{inactive_agents}}, 20, 10));</script>
+            </span>
+        </div>
+        <div class="statistic-container clickable" id="out_of_date_agents_container"
+            onclick="openOODAgentTable('Out of Date Machines (4+ Missing Patches)', {{ood_agents_json}})">
+            <span class="statistic-container-header">
+                Out of Date
+            </span>
+            <span class="statistic-container-data" id="out_of_date_agents">
+                <script>document.write(conditionalColor({{ood_agents}}, 100, 50));</script>
+            </span>
+        </div>
+        <div class="statistic-container clickable" id="recent_alarms_container"
+            onclick="openAlarmsTable('Alarms in Last 24 Hours', {{recent_alarms_json}})">
+            <span class="statistic-container-header">
+                Alarms (24h)
+            </span>
+            <span class="statistic-container-data" id="recent_alarms">
+                <script>document.write(conditionalColor({{recent_alarms}}, 5, 1));</script>
+            </span>
+        </div>
+        <div class="statistic-container" style="grid-row: 2 / 4;">
+            <span class="statistic-container-header">
+                Agent Status
+            </span>
+            <div id="agents_chart" style="width: 200px; height: 200px;"></div>
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script type="text/javascript">
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+
+            online = 0;
+            offline = 0;
+
+            for (var obj of all_agents) {
+                if (obj.IsOnline) {
+                    online += 1;
+                } else {
+                    offline += 1;
+                }
+            }
+
+            function drawChart() {
+
+                var data = google.visualization.arrayToDataTable([
+                ['Task', 'Hours per Day'],
+                ['Online',     online],
+                ['Offline',    offline],
+                ]);
+
+                var options = {
+                    'chartArea': {'width': '90%', 'height': '90%'},
+                    colors: ['green','red'],
+                    backgroundColor: { fill:'transparent' },
+                    legend: 'none',
+                    pieSliceText: 'value',
+                    pieSliceTextStyle: {fontSize: 24}
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('agents_chart'));
+
+                chart.draw(data, options);
+            }
+            </script>
+        </div>
+        <script>
+            function openInactiveAgentTable(title, data) {
+                modalHeader.innerHTML = title;
+
+                var table = "";
+
+                for (var obj of data) {
+                    table +=
+                        "<tr><td><div class='popuptable-item'>" + obj.MachineId +
+                        "</div></td><td><div class='popuptable-item'>" + obj.MachineName +
+                        "</div></td><td><div class='popuptable-item'>" + obj.GroupId +
+                        "</div></td><td><div class='popuptable-item'>" + timeSince(new Date(obj.LastCheckInTime).getTime()) +
+                        "</div></td><td><div class='popuptable-item'>" + obj.MachineType +
+                        "</div></td><td><div class='popuptable-item'>" + obj.LastLoggedOnUser +
+                        "</div></td></tr>";
+
+                }
+
+                document.getElementById('ticket-table-head').innerHTML =
+                    "<th style='width:10%'>Agent</th>" +
+                    "<th style='width:10%'>Computer Name</th>" +
+                    "<th style='width:10%'>Machine Group</th>" +
+                    "<th style='width:10%'>Last Check In</th>" +
+                    "<th style='width:10%'>Machine Type</th>" +
+                    "<th style='width:10%'>Last Logged In User</th>";
+
+                modalTable.innerHTML = table;
+
+                modal.style.display = "block";
+            }
+
+            function openOODAgentTable(title, data) {
+                modalHeader.innerHTML = title;
+
+                var table = "";
+
+                for (var obj of data) {
+                    table +=
+                        "<tr><td><div class='popuptable-item'>" + obj.TotalVulnerabilitiesCount +
+                        "</div></td><td><div class='popuptable-item'>" + obj.MachineName +
+                        "</div></td><td><div class='popuptable-item'>" + obj.GroupName +
+                        "</div></td><td><div class='popuptable-item'>" + obj.ComplianceMessage +
+                        "</div></td><td><div class='popuptable-item'>" + obj.VulnerabilityCategory +
+                        "</div></td><td><div class='popuptable-item'>" + timeSince(new Date(obj.LastPatchDeploymentDateTime).getTime()) +
+                        "</div></td></tr>";
+
+                }
+
+                document.getElementById('ticket-table-head').innerHTML =
+                    "<th style='width:5%'>Number</th>" +
+                    "<th style='width:10%'>Agent</th>" +
+                    "<th style='width:10%'>Machine Group</th>" +
+                    "<th style='width:10%'>Message</th>" +
+                    "<th style='width:10%'>Category</th>" +
+                    "<th style='width:10%'>Last Patch Deployment</th>";
+
+                modalTable.innerHTML = table;
+
+                modal.style.display = "block";
+            }
+
+            function openAlarmsTable(title, data) {
+                modalHeader.innerHTML = title;
+
+                var table = "";
+
+                for (var obj of data) {
+                    table +=
+                        "<tr><td><div class='popuptable-item'>" + getAgentByID(obj.AgentId).MachineId +
+                        "</div></td><td><div class='popuptable-item'>" + obj.AlarmName +
+                        "</div></td><td><div class='popuptable-item' title='" + obj.AlarmMessage + "'>" + obj.AlarmSubject +
+                        "</div></td></tr>";
+                }
+
+                document.getElementById('ticket-table-head').innerHTML =
+                    "<th style='width:20%'>Agent</th>" +
+                    "<th style='width:20%'>Type</th>" +
+                    "<th style='width:60%'>Alarm Message (hover for more details)</th>";
+
+                modalTable.innerHTML = table;
+
+                modal.style.display = "block";
+            }
+
+            function getAgentByID(agent_id) {
+                for (var obj of all_agents) {
+                    if (obj.AgentId == agent_id) {
+                        return obj;
+                    }
+                }
+            }
+        </script>
     </div>
 </body>
 

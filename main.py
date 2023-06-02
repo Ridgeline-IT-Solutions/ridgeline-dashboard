@@ -1,16 +1,43 @@
 from datetime import datetime, timedelta, timezone
 import json
 import api.mojo
+import api.kaseya
 from flask import Flask, render_template
+
+from threading import Thread
+
 app = Flask(__name__)
 
+def get_cache():
+    """
+    Updates all caches.
 
-# get new cache
-print("Retrieving data from Mojo...")
-t1 = datetime.now()
-# api.mojo.get_cache()
-t2 = datetime.now()
-print(f"Cache updated! Time: {t2 - t1}")
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
+    print("Retrieving data from Mojo...")
+    t1 = datetime.now()
+    api.mojo.get_cache()
+    t2 = datetime.now()
+    print(f"Mojo cache updated! Time: {t2 - t1}")
+
+    print("Retrieving data from Kaseya...")
+    t1 = datetime.now()
+    api.kaseya.update_cache()
+    t2 = datetime.now()
+    print(f"Kaseya cache updated! Time: {t2 - t1}")
+
+def update_cache():
+    from time import sleep
+    while True:
+        get_cache()
+        sleep(600) # sleep for 10 mins
 
 
 @app.route("/")
@@ -30,7 +57,7 @@ def index():
 
             if not ticket['assigned_to_id']:
                 unassigned_tickets.append(ticket)
-            if (datetime.utcnow() - datetime.strptime(ticket['updated_on'], "%Y-%m-%dT%H:%M:%S.%fZ")).days > 18:
+            if (datetime.utcnow() - datetime.strptime(ticket['updated_on'], "%Y-%m-%dT%H:%M:%S.%fZ")).days > 15:
                 inactive_tickets.append(ticket)
             if ticket['status_id'] == 30 or ticket['status_id'] == 40:
                 waiting_tickets.append(ticket)
@@ -39,70 +66,77 @@ def index():
     closed_1d = 0
     closed_30d = 0
 
+    turnarounds = []
+
     for ticket in all_tickets:
         # if ticket was created today
-        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['created_on'] or '1970-01-01T12:00:00Z')) > timedelta(days=1):
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['created_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=1):
             created_1d += 1
 
         # if ticket was created in last 30 days
-        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['created_on'] or '1970-01-01T12:00:00Z')) > timedelta(days=30):
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['created_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=30):
             created_30d += 1
 
         # if ticket was closed today
-        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) > timedelta(days=1):
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=1):
             closed_1d += 1
 
         # if ticket was closed in last 30 days
-        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) > timedelta(days=30):
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=30):
             closed_30d += 1
+            turnarounds.append((datetime.fromisoformat(ticket['closed_on']) - datetime.fromisoformat(ticket['created_on'])))
 
-    kill_ratio_1d = round(created_1d/closed_1d, 2)
-    kill_ratio_30d = round(created_30d/closed_30d, 2)
+    avg_turnaround = sum(turnarounds, timedelta(0)) / len(turnarounds)
+    avg_turnaround_str = f"{avg_turnaround.days}d{(avg_turnaround.seconds%3600)%24}h"
 
-    open_tickets_color = "green"
-    unassigned_tickets_color = "green"
-    inactive_tickets_color = "green"
-    waiting_tickets_color = "green"
+    kill_ratio_1d = round(closed_1d/created_1d, 2)
+    kill_ratio_30d = round(closed_30d/created_30d, 2)
 
-    if len(open_tickets) >= 50:
-        open_tickets_color = "red"
-    elif len(open_tickets) >= 25:
-        open_tickets_color = "yellow"
-        
-    if len(unassigned_tickets) >= 10:
-        unassigned_tickets_color = "red"
-    elif len(unassigned_tickets) >= 5:
-        unassigned_tickets_color = "yellow"
+    agents = api.kaseya.get_agents()
+    patches = api.kaseya.get_patches()
+    alarms = api.kaseya.get_alarms()
 
-    if len(inactive_tickets) >= 10:
-        inactive_tickets_color = "red"
-    elif len(inactive_tickets) >= 5:
-        inactive_tickets_color = "yellow"
+    inactive_agents = []
+    ood_agents = []
+    recent_alarms = []
 
-    if len(waiting_tickets) >= 20:
-        waiting_tickets_color = "red"
-    elif len(waiting_tickets) >= 10:
-        waiting_tickets_color = "yellow"
+    for agent in agents:
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(agent['LastCheckInTime'])) > timedelta(days=15):
+            inactive_agents.append(agent)
+
+    for agent in patches:
+        if agent['TotalVulnerabilitiesCount'] >= 4:
+            ood_agents.append(agent)
+
+    for alarm in alarms:
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(alarm['EventUtcTime'])) < timedelta(days=1):
+            recent_alarms.append(alarm)
 
     return render_template("index.html",
-                           open_tickets=len(open_tickets),
-                           unassigned_tickets=len(unassigned_tickets),
-                           inactive_tickets=len(inactive_tickets),
-                           waiting_tickets=len(waiting_tickets),
-                           open_tickets_json=json.dumps(open_tickets),
-                           unassigned_tickets_json=json.dumps(unassigned_tickets),
-                           inactive_tickets_json=json.dumps(inactive_tickets),
-                           waiting_tickets_json=json.dumps(waiting_tickets),
-                           users=json.dumps(all_users),
-                           groups=json.dumps(all_groups),
-                           kill_ratio_1d=kill_ratio_1d,
-                           kill_ratio_30d=kill_ratio_30d,
-                           open_tickets_color=open_tickets_color,
-                           unassigned_tickets_color=unassigned_tickets_color,
-                           inactive_tickets_color=inactive_tickets_color,
-                           waiting_tickets_color=waiting_tickets_color
-                           )
+        open_tickets=len(open_tickets),
+        unassigned_tickets=len(unassigned_tickets),
+        inactive_tickets=len(inactive_tickets),
+        waiting_tickets=len(waiting_tickets),
+        open_tickets_json=json.dumps(open_tickets),
+        unassigned_tickets_json=json.dumps(unassigned_tickets),
+        inactive_tickets_json=json.dumps(inactive_tickets),
+        waiting_tickets_json=json.dumps(waiting_tickets),
+        users=json.dumps(all_users),
+        groups=json.dumps(all_groups),
+        kill_ratio_1d=kill_ratio_1d,
+        kill_ratio_30d=kill_ratio_30d,
+        avg_turnaround=avg_turnaround_str,
+        all_agents=json.dumps(agents),
+        inactive_agents=len(inactive_agents),
+        inactive_agents_json=json.dumps(inactive_agents),
+        ood_agents=len(ood_agents),
+        ood_agents_json=json.dumps(ood_agents),
+        recent_alarms=len(recent_alarms),
+        recent_alarms_json=json.dumps(recent_alarms)
+        )
 
 
 if __name__ == "__main__":
+    t = Thread(target=update_cache, daemon=True, name='Background Cache Updates')
+    t.start()
     app.run(debug=True)
