@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 import json
 import api.mojo
 import api.kaseya
+import api.comet
 from flask import Flask, render_template
 
 from threading import Thread
@@ -33,6 +34,12 @@ def get_cache():
     t2 = datetime.now()
     print(f"Kaseya cache updated! Time: {t2 - t1}")
 
+    print("Retrieving data from Comet...")
+    t1 = datetime.now()
+    api.comet.update_cache()
+    t2 = datetime.now()
+    print(f"Comet cache updated! Time: {t2 - t1}")
+
 def update_cache():
     from time import sleep
     while True:
@@ -45,6 +52,8 @@ def index():
     all_tickets = api.mojo.get_cached_tickets()
     all_users = api.mojo.get_cached_users()
     all_groups = api.mojo.get_cached_groups()
+    jobs = api.comet.get_cached_jobs()
+    jobs_statuses = api.comet.get_jobs_status(jobs)
 
     open_tickets = []
     unassigned_tickets = []
@@ -89,8 +98,14 @@ def index():
     avg_turnaround = sum(turnarounds, timedelta(0)) / len(turnarounds)
     avg_turnaround_str = f"{avg_turnaround.days}d{(avg_turnaround.seconds%3600)%24}h"
 
-    kill_ratio_1d = round(closed_1d/created_1d, 2)
-    kill_ratio_30d = round(closed_30d/created_30d, 2)
+    try:
+        kill_ratio_1d = round(closed_1d/created_1d, 2)
+    except:
+        kill_ratio_1d = closed_1d
+    try:
+        kill_ratio_30d = round(closed_30d/created_30d, 2)
+    except:
+        kill_ratio_30d = closed_1d
 
     agents = api.kaseya.get_agents()
     patches = api.kaseya.get_patches()
@@ -132,7 +147,9 @@ def index():
         ood_agents=len(ood_agents),
         ood_agents_json=json.dumps(ood_agents),
         recent_alarms=len(recent_alarms),
-        recent_alarms_json=json.dumps(recent_alarms)
+        recent_alarms_json=json.dumps(recent_alarms),
+        jobs_json=json.dumps(jobs),
+        jobs_statuses=json.dumps(jobs_statuses)
         )
 
 

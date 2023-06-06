@@ -34,27 +34,31 @@
     </div>
 
     <script>
-    function conditionalColor(value, red, yellow, invert = false) {
-        out = "<span style='color:";
-        if (invert) {
-            if (value <= red) {
-                out += "red;'>"+value+"</span>";
-            } else if (value <= yellow) {
-                out += "yellow;'>"+value+"</span>";
-            } else {
-                out += "green;'>"+value+"</span>";
+        function conditionalColor(value, red, yellow, invert = false) {
+            if (value < 0) {
+                return "-";
             }
-        } else {
-            if (value >= red) {
-                out += "red;'>"+value+"</span>";
-            } else if (value >= yellow) {
-                out += "yellow;'>"+value+"</span>";
+            out = "<span style='color:";
+            
+            if (invert) {
+                if (value <= red) {
+                    out += "red;'>" + value + "</span>";
+                } else if (value <= yellow) {
+                    out += "yellow;'>" + value + "</span>";
+                } else {
+                    out += "green;'>" + value + "</span>";
+                }
             } else {
-                out += "green;'>"+value+"</span>";
+                if (value >= red) {
+                    out += "red;'>" + value + "</span>";
+                } else if (value >= yellow) {
+                    out += "yellow;'>" + value + "</span>";
+                } else {
+                    out += "green;'>" + value + "</span>";
+                }
             }
+            return out;
         }
-        return out;
-    }
     </script>
     <div class="data-container">
         <span class="data-container-header">
@@ -66,7 +70,7 @@
                 Open Tickets
             </span>
             <span class="statistic-container-data" id="open_tickets">
-                <script>document.write(conditionalColor({{open_tickets}}, 50, 25));</script>
+                <script>document.write(conditionalColor({{ open_tickets }}, 50, 25));</script>
             </span>
         </div>
         <div class="statistic-container clickable" id="unassigned_tickets_container"
@@ -75,7 +79,7 @@
                 Unassigned Tickets
             </span>
             <span class="statistic-container-data" id="unassigned_tickets">
-                <script>document.write(conditionalColor({{unassigned_tickets}}, 5, 2));</script>
+                <script>document.write(conditionalColor({{ unassigned_tickets }}, 5, 2));</script>
             </span>
         </div>
         <div class="statistic-container clickable" id="inactive_tickets_container"
@@ -84,7 +88,7 @@
                 Inactive Tickets
             </span>
             <span class="statistic-container-data" id="inactive_tickets">
-                <script>document.write(conditionalColor({{inactive_tickets}}, 8, 4));</script>
+                <script>document.write(conditionalColor({{ inactive_tickets }}, 8, 4));</script>
             </span>
         </div>
         <div class="statistic-container clickable" id="waiting_tickets_container"
@@ -93,7 +97,7 @@
                 On Hold
             </span>
             <span class="statistic-container-data" id="waiting_tickets">
-                <script>document.write(conditionalColor({{waiting_tickets}}, 20, 10));</script>
+                <script>document.write(conditionalColor({{ waiting_tickets }}, 20, 10));</script>
             </span>
         </div>
         <div class="statistic-container">
@@ -101,7 +105,7 @@
                 Kill Ratio (24h)
             </span>
             <span class="statistic-container-data">
-                <script>document.write(conditionalColor({{kill_ratio_1d}}, 0.8, 1.2, true));</script>
+                <script>document.write(conditionalColor({{ kill_ratio_1d }}, 0.8, 1.2, true));</script>
             </span>
         </div>
         <div class="statistic-container">
@@ -109,7 +113,7 @@
                 Kill Ratio (30d)
             </span>
             <span class="statistic-container-data">
-                <script>document.write(conditionalColor({{kill_ratio_30d}}, 0.8, 1.2, true));</script>
+                <script>document.write(conditionalColor({{ kill_ratio_30d }}, 0.8, 1.2, true));</script>
             </span>
         </div>
         <div class="statistic-container" style="grid-column: 3 / 5;">
@@ -263,7 +267,7 @@
                 Inactive Agents
             </span>
             <span class="statistic-container-data" id="inactive_agents">
-                <script>document.write(conditionalColor({{inactive_agents}}, 20, 10));</script>
+                <script>document.write(conditionalColor({{ inactive_agents }}, 20, 10));</script>
             </span>
         </div>
         <div class="statistic-container clickable" id="out_of_date_agents_container"
@@ -272,7 +276,7 @@
                 Out of Date
             </span>
             <span class="statistic-container-data" id="out_of_date_agents">
-                <script>document.write(conditionalColor({{ood_agents}}, 100, 50));</script>
+                <script>document.write(conditionalColor({{ ood_agents }}, 100, 50));</script>
             </span>
         </div>
         <div class="statistic-container clickable" id="recent_alarms_container"
@@ -281,7 +285,7 @@
                 Alarms (24h)
             </span>
             <span class="statistic-container-data" id="recent_alarms">
-                <script>document.write(conditionalColor({{recent_alarms}}, 5, 1));</script>
+                <script>document.write(conditionalColor({{ recent_alarms }}, 5, 1));</script>
             </span>
         </div>
         <div class="statistic-container" style="grid-row: 2 / 4;">
@@ -291,41 +295,69 @@
             <div id="agents_chart" style="width: 200px; height: 200px;"></div>
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             <script type="text/javascript">
-            google.charts.load('current', {'packages':['corechart']});
-            google.charts.setOnLoadCallback(drawChart);
+                google.charts.load('current', { 'packages': ['corechart'] });
+                google.charts.setOnLoadCallback(drawChart);
+                google.charts.setOnLoadCallback(drawBackupsChart);
 
-            online = 0;
-            offline = 0;
+                online = 0;
+                offline = 0;
 
-            for (var obj of all_agents) {
-                if (obj.IsOnline) {
-                    online += 1;
-                } else {
-                    offline += 1;
+                for (var obj of all_agents) {
+                    if (obj.IsOnline) {
+                        online += 1;
+                    } else {
+                        offline += 1;
+                    }
                 }
-            }
 
-            function drawChart() {
+                function drawChart() {
 
-                var data = google.visualization.arrayToDataTable([
-                ['Task', 'Hours per Day'],
-                ['Online',     online],
-                ['Offline',    offline],
-                ]);
+                    var data = google.visualization.arrayToDataTable([
+                        ['Status', 'Count'],
+                        ['Online', online],
+                        ['Offline', offline],
+                    ]);
 
-                var options = {
-                    'chartArea': {'width': '90%', 'height': '90%'},
-                    colors: ['green','red'],
-                    backgroundColor: { fill:'transparent' },
-                    legend: 'none',
-                    pieSliceText: 'value',
-                    pieSliceTextStyle: {fontSize: 24}
-                };
+                    var options = {
+                        'chartArea': { 'width': '90%', 'height': '90%' },
+                        colors: ['green', 'red'],
+                        backgroundColor: { fill: 'transparent' },
+                        legend: 'none',
+                        pieSliceText: 'value',
+                        pieSliceTextStyle: { fontSize: 24 }
+                    };
 
-                var chart = new google.visualization.PieChart(document.getElementById('agents_chart'));
+                    var chart = new google.visualization.PieChart(document.getElementById('agents_chart'));
 
-                chart.draw(data, options);
-            }
+                    chart.draw(data, options);
+                }
+
+                jobs_statuses = JSON.parse({{jobs_statuses | tojson | safe}})
+
+                function drawBackupsChart() {
+
+                    var data = google.visualization.arrayToDataTable([
+                        ['Status', 'Count'],
+                        ['Success', jobs_statuses.Success],
+                        ['Warning', jobs_statuses.Warning],
+                        ['Missed', jobs_statuses.Missed],
+                        ['Skipped', jobs_statuses.Skipped],
+                        ['Failed', jobs_statuses.Error],
+                    ]);
+
+                    var options = {
+                        'chartArea': { 'width': '90%', 'height': '90%' },
+                        colors: ['green', 'yellow', 'orange', 'blue', 'red'],
+                        legendTextStyle: { color: '#FFF' },
+                        backgroundColor: { fill: 'transparent' },
+                        pieSliceText: 'value',
+                        pieSliceTextStyle: { fontSize: 24 }
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('backups_chart'));
+
+                    chart.draw(data, options);
+                }
             </script>
         </div>
         <script>
@@ -421,6 +453,16 @@
             }
         </script>
     </div>
+    <div class="data-container">
+        <span class="data-container-header">
+            Comet Information
+        </span>
+        <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 1/4;">
+            <span class="statistic-container-header">
+                Backup Status
+            </span>
+            <div id="backups_chart" style="width: 300px; height: 200px;"></div>
+        </div>
 </body>
 
 </html>
