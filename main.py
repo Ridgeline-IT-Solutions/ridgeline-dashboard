@@ -3,6 +3,7 @@ import json
 import api.mojo
 import api.kaseya
 import api.comet
+import api.ruon
 from flask import Flask, render_template
 
 from threading import Thread
@@ -54,6 +55,8 @@ def index():
     all_groups = api.mojo.get_cached_groups()
     jobs = api.comet.get_cached_jobs()
     jobs_statuses = api.comet.get_jobs_status(jobs)
+    device_counts = api.comet.counts()
+    ruon_agents = api.ruon.get_agents()
 
     open_tickets = []
     unassigned_tickets = []
@@ -76,6 +79,7 @@ def index():
     closed_30d = 0
 
     turnarounds = []
+    turnarounds_30d = []
 
     for ticket in all_tickets:
         # if ticket was created today
@@ -90,13 +94,20 @@ def index():
         if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=1):
             closed_1d += 1
 
+        # if ticket was closed in last 7 days
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=7):
+            turnarounds.append((datetime.fromisoformat(ticket['closed_on']) - datetime.fromisoformat(ticket['created_on'])))
+
         # if ticket was closed in last 30 days
         if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=30):
             closed_30d += 1
-            turnarounds.append((datetime.fromisoformat(ticket['closed_on']) - datetime.fromisoformat(ticket['created_on'])))
+            turnarounds_30d.append((datetime.fromisoformat(ticket['closed_on']) - datetime.fromisoformat(ticket['created_on'])))
 
     avg_turnaround = sum(turnarounds, timedelta(0)) / len(turnarounds)
     avg_turnaround_str = f"{avg_turnaround.days}d{(avg_turnaround.seconds%3600)%24}h"
+
+    avg_turnaround_30d = sum(turnarounds_30d, timedelta(0)) / len(turnarounds_30d)
+    avg_turnaround_30d_str = f"{avg_turnaround_30d.days}d{(avg_turnaround_30d.seconds%3600)%24}h"
 
     try:
         kill_ratio_1d = round(closed_1d/created_1d, 2)
@@ -127,6 +138,14 @@ def index():
         if (datetime.now(timezone.utc) - datetime.fromisoformat(alarm['EventUtcTime'])) < timedelta(days=1):
             recent_alarms.append(alarm)
 
+    ruon_statuses = {
+        "ON": 0,
+        "OFF": 0
+    }
+    
+    for agent in ruon_agents:
+        ruon_statuses[ruon_agents[agent]] += 1
+
     return render_template("index.html",
         open_tickets=len(open_tickets),
         unassigned_tickets=len(unassigned_tickets),
@@ -141,6 +160,7 @@ def index():
         kill_ratio_1d=kill_ratio_1d,
         kill_ratio_30d=kill_ratio_30d,
         avg_turnaround=avg_turnaround_str,
+        avg_turnaround_30d=avg_turnaround_30d_str,
         all_agents=json.dumps(agents),
         inactive_agents=len(inactive_agents),
         inactive_agents_json=json.dumps(inactive_agents),
@@ -149,7 +169,10 @@ def index():
         recent_alarms=len(recent_alarms),
         recent_alarms_json=json.dumps(recent_alarms),
         jobs_json=json.dumps(jobs),
-        jobs_statuses=json.dumps(jobs_statuses)
+        jobs_statuses=json.dumps(jobs_statuses),
+        device_counts=json.dumps(device_counts),
+        ruon_statuses=json.dumps(ruon_statuses),
+        ruon_alerts = len(api.ruon.get_alarms())
         )
 
 

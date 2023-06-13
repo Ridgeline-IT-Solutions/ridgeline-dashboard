@@ -4,6 +4,9 @@
 <head>
     <script src="https://code.jquery.com/jquery-1.7.2.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesheet.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <meta http-equiv="refresh" content="60">
+    <title>Ridgeline Dashboard</title>
 </head>
 
 <body>
@@ -39,7 +42,7 @@
                 return "-";
             }
             out = "<span style='color:";
-            
+
             if (invert) {
                 if (value <= red) {
                     out += "red;'>" + value + "</span>";
@@ -60,7 +63,7 @@
             return out;
         }
     </script>
-    <div class="data-container">
+    <div class="data-container" style="grid-row:1/2; grid-column: 1/3;">
         <span class="data-container-header">
             Mojo Information
         </span>
@@ -116,12 +119,20 @@
                 <script>document.write(conditionalColor({{ kill_ratio_30d }}, 0.8, 1.2, true));</script>
             </span>
         </div>
-        <div class="statistic-container" style="grid-column: 3 / 5;">
+        <div class="statistic-container" style="">
             <span class="statistic-container-header">
-                Average Turnaround
+                Avg Turnaround (7d)
             </span>
             <span class="statistic-container-data">
                 {{avg_turnaround}}
+            </span>
+        </div>
+        <div class="statistic-container" style="">
+            <span class="statistic-container-header">
+                Avg Turnaround (30d)
+            </span>
+            <span class="statistic-container-data">
+                {{avg_turnaround_30d}}
             </span>
         </div>
         <script>
@@ -257,7 +268,7 @@
             }
         </script>
     </div>
-    <div class="data-container">
+    <div class="data-container" style="grid-row:1/2; grid-column: 3/5;">
         <span class="data-container-header">
             Kaseya Information
         </span>
@@ -288,16 +299,18 @@
                 <script>document.write(conditionalColor({{ recent_alarms }}, 5, 1));</script>
             </span>
         </div>
-        <div class="statistic-container" style="grid-row: 2 / 4;">
+        <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 1/3;">
             <span class="statistic-container-header">
                 Agent Status
             </span>
-            <div id="agents_chart" style="width: 200px; height: 200px;"></div>
+            <div class="chart" id="agents_chart" style="width: 300px; height: 200px;"></div>
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             <script type="text/javascript">
                 google.charts.load('current', { 'packages': ['corechart'] });
                 google.charts.setOnLoadCallback(drawChart);
                 google.charts.setOnLoadCallback(drawBackupsChart);
+                google.charts.setOnLoadCallback(drawCometDeviceChart);
+                google.charts.setOnLoadCallback(drawRUONChart);
 
                 online = 0;
                 offline = 0;
@@ -315,24 +328,25 @@
                     var data = google.visualization.arrayToDataTable([
                         ['Status', 'Count'],
                         ['Online', online],
-                        ['Offline', offline],
-                    ]);
+                        ['Offline', offline - {{ inactive_agents }}],
+                ['Inactive', {{ inactive_agents }}],
+                        ]);
 
-                    var options = {
-                        'chartArea': { 'width': '90%', 'height': '90%' },
-                        colors: ['green', 'red'],
-                        backgroundColor: { fill: 'transparent' },
-                        legend: 'none',
-                        pieSliceText: 'value',
-                        pieSliceTextStyle: { fontSize: 24 }
-                    };
+                var options = {
+                    'chartArea': { 'width': '100%', 'height': '90%' },
+                    colors: ['green', 'orange', 'red'],
+                    backgroundColor: { fill: 'transparent' },
+                    legendTextStyle: { color: '#FFF' },
+                    pieSliceText: 'value',
+                    pieSliceTextStyle: { fontSize: 20 }
+                };
 
-                    var chart = new google.visualization.PieChart(document.getElementById('agents_chart'));
+                var chart = new google.visualization.PieChart(document.getElementById('agents_chart'));
 
-                    chart.draw(data, options);
-                }
+                chart.draw(data, options);
+                    }
 
-                jobs_statuses = JSON.parse({{jobs_statuses | tojson | safe}})
+                jobs_statuses = JSON.parse({{ jobs_statuses | tojson | safe}})
 
                 function drawBackupsChart() {
 
@@ -351,10 +365,58 @@
                         legendTextStyle: { color: '#FFF' },
                         backgroundColor: { fill: 'transparent' },
                         pieSliceText: 'value',
-                        pieSliceTextStyle: { fontSize: 24 }
+                        pieSliceTextStyle: { fontSize: 20 }
                     };
 
                     var chart = new google.visualization.PieChart(document.getElementById('backups_chart'));
+
+                    chart.draw(data, options);
+                }
+
+                device_counts = JSON.parse({{ device_counts | tojson | safe }})
+
+                function drawCometDeviceChart() {
+
+                    var data = google.visualization.arrayToDataTable([
+                        ['Status', 'Count'],
+                        ['Online', device_counts.online],
+                        ['Offline', device_counts.offline]
+                    ]);
+
+                    var options = {
+                        'chartArea': { 'width': '90%', 'height': '90%' },
+                        colors: ['green', 'red'],
+                        legendTextStyle: { color: '#FFF' },
+                        backgroundColor: { fill: 'transparent' },
+                        pieSliceText: 'value',
+                        pieSliceTextStyle: { fontSize: 20 }
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('comet_device_chart'));
+
+                    chart.draw(data, options);
+                }
+
+                ruon_statuses = JSON.parse({{ ruon_statuses | tojson | safe }})
+
+                function drawRUONChart() {
+
+                    var data = google.visualization.arrayToDataTable([
+                        ['Status', 'Count'],
+                        ['Online', ruon_statuses.ON],
+                        ['Offline', ruon_statuses.OFF]
+                    ]);
+
+                    var options = {
+                        'chartArea': { 'width': '90%', 'height': '90%' },
+                        colors: ['green', 'red'],
+                        legend: 'none',
+                        backgroundColor: { fill: 'transparent' },
+                        pieSliceText: 'value',
+                        pieSliceTextStyle: { fontSize: 20 }
+                    };
+
+                    var chart = new google.visualization.PieChart(document.getElementById('ruon_chart'));
 
                     chart.draw(data, options);
                 }
@@ -453,16 +515,42 @@
             }
         </script>
     </div>
-    <div class="data-container">
+    <div class="data-container" style="grid-row:2/3; grid-column: 1/3;">
         <span class="data-container-header">
             Comet Information
         </span>
-        <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 1/4;">
+        <div class="statistic-container" style="grid-row: 2 / 4;">
             <span class="statistic-container-header">
-                Backup Status
+                Device Status
             </span>
-            <div id="backups_chart" style="width: 300px; height: 200px;"></div>
+            <div class="chart" id="comet_device_chart" style="width: 300px; height: 200px;"></div>
         </div>
+        <div class="statistic-container" style="grid-row: 2 / 4;">
+            <span class="statistic-container-header">
+                Backup Jobs (24h)
+            </span>
+            <div class="chart" id="backups_chart" style="width: 300px; height: 200px;"></div>
+        </div>
+    </div>
+    <div class="data-container" style="grid-row:2/3; grid-column: 3/4;">
+        <span class="data-container-header">
+            R-U-ON Information
+        </span>
+        <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 1/3;">
+            <span class="statistic-container-header">
+            Network Statuses
+            </span>
+            <div class="chart" id="ruon_chart" style="width: 200px; height: 200px;"></div>
+        </div>
+        <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 3/5;">
+            <span class="statistic-container-header">
+                Alerts
+            </span>
+            <span class="statistic-container-data" id="recent_alarms">
+                <script>document.write(conditionalColor({{ ruon_alerts }}, 1, 2));</script>
+            </span>
+        </div>
+    </div>
 </body>
 
 </html>

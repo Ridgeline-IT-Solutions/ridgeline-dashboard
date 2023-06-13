@@ -6,7 +6,8 @@ html {
 
 body {
     margin: 0;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     padding: 10px;
     gap: 10px;
 }
@@ -162,4 +163,9 @@ body {
 
 .popup-table-item {
     text-align: center;
+}
+
+.chart {
+    display: block;
+    margin: 0 auto;
 }

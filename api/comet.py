@@ -92,6 +92,10 @@ def counts() -> dict:
         if device['ReportedVersion'] != version:
             ret['outdated'] += 1
 
+    for val in ret:
+        if ret[val] < 0:
+            ret[val] = 0
+
     return ret
 
 def get_jobs_24h():
