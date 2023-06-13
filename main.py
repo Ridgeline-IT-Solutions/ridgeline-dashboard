@@ -24,22 +24,31 @@ def get_cache():
         None
     """
     print("Retrieving data from Mojo...")
-    t1 = datetime.now()
-    api.mojo.get_cache()
-    t2 = datetime.now()
-    print(f"Mojo cache updated! Time: {t2 - t1}")
+    try:
+        t1 = datetime.now()
+        api.mojo.get_cache()
+        t2 = datetime.now()
+        print(f"Mojo cache updated! Time: {t2 - t1}")
+    except:
+        print(f"Mojo cache update failed!")
 
     print("Retrieving data from Kaseya...")
-    t1 = datetime.now()
-    api.kaseya.update_cache()
-    t2 = datetime.now()
-    print(f"Kaseya cache updated! Time: {t2 - t1}")
+    try:
+        t1 = datetime.now()
+        api.kaseya.update_cache()
+        t2 = datetime.now()
+        print(f"Kaseya cache updated! Time: {t2 - t1}")
+    except:
+        print(f"Mojo cache update failed!")
 
     print("Retrieving data from Comet...")
-    t1 = datetime.now()
-    api.comet.update_cache()
-    t2 = datetime.now()
-    print(f"Comet cache updated! Time: {t2 - t1}")
+    try:
+        t1 = datetime.now()
+        api.comet.update_cache()
+        t2 = datetime.now()
+        print(f"Comet cache updated! Time: {t2 - t1}")
+    except:
+        print(f"Comet cache update failed!")
 
 def update_cache():
     from time import sleep
