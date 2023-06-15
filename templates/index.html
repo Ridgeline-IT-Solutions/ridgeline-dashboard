@@ -515,7 +515,7 @@
             }
         </script>
     </div>
-    <div class="data-container" style="grid-row:2/3; grid-column: 1/3;">
+    <div class="data-container" style="grid-row:2/3; grid-column: 1/2;">
         <span class="data-container-header">
             Comet Information
         </span>
@@ -532,7 +532,67 @@
             <div class="chart" id="backups_chart" style="width: 300px; height: 200px;"></div>
         </div>
     </div>
-    <div class="data-container" style="grid-row:2/3; grid-column: 3/4;">
+    <div class="data-container" style="grid-row:2/3; grid-column: 2/5;">
+        <span class="data-container-header" style="grid-column:1/3">
+            DNSFilter Information (2h)
+        </span>
+        <div class="statistic-container" style="grid-row: 2 / 3; grid-column: 1/2;">
+            <span class="statistic-container-header">
+                Blocked Requests
+            </span>
+            <span class="statistic-container-data" id="dnsfilter_blocks">
+                {{dnsfilter_numbers_2h['blocked']}}
+            </span>
+        </div>
+        <div class="statistic-container" style="grid-row: 2 / 3; grid-column: 2/3;">
+            <span class="statistic-container-header">
+                Threats
+            </span>
+            <span class="statistic-container-data" id="dnsfilter_threats">
+                {{dnsfilter_numbers_2h['threats']}}
+            </span>
+        </div>
+        <div class="statistic-container" style="grid-row: 3 / 4; grid-column: 1/3;">
+            <span class="statistic-container-header">
+                Top 3 w/ Most Threats
+            </span>
+            {% for item in dnsfilter_top3_2h %}
+            <div class="statistic-container">
+                <span>{{ item }} - {{ dnsfilter_top3_2h[item] }} Threats</span> 
+            </div>
+            {% endfor %}
+        </div>
+        <span class="data-container-header" style="grid-column:3/5">
+            DNSFilter Information (24h)
+        </span>
+        <div class="statistic-container" style="grid-row: 2 / 3; grid-column: 3/4;">
+            <span class="statistic-container-header">
+                Blocked Requests
+            </span>
+            <span class="statistic-container-data" id="dnsfilter_blocks">
+                {{dnsfilter_numbers_24h['blocked']}}
+            </span>
+        </div>
+        <div class="statistic-container" style="grid-row: 2 / 3; grid-column: 4/5;">
+            <span class="statistic-container-header">
+                Threats
+            </span>
+            <span class="statistic-container-data" id="dnsfilter_threats">
+                {{dnsfilter_numbers_24h['threats']}}
+            </span>
+        </div>
+        <div class="statistic-container" style="grid-row: 3 / 4; grid-column: 3/5;">
+            <span class="statistic-container-header">
+                Top 3 w/ Most Threats
+            </span>
+            {% for item in dnsfilter_top3_24h %}
+            <div class="statistic-container">
+                <span>{{ item }} - {{ dnsfilter_top3_24h[item] }} Threats</span> 
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="data-container" style="grid-row:3/4; grid-column: 1/2;">
         <span class="data-container-header">
             R-U-ON Information
         </span>

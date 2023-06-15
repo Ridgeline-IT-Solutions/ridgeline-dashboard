@@ -4,6 +4,7 @@ import api.mojo
 import api.kaseya
 import api.comet
 import api.ruon
+import api.dnsfilter
 from flask import Flask, render_template
 
 from threading import Thread
@@ -155,6 +156,11 @@ def index():
     for agent in ruon_agents:
         ruon_statuses[ruon_agents[agent]] += 1
 
+    dnsfilter_numbers_2h = api.dnsfilter.get_total_stats(2)
+    dnsfilter_numbers_24h = api.dnsfilter.get_total_stats(24)
+    dnsfilter_top3_2h = api.dnsfilter.get_most_threats(3, 2)
+    dnsfilter_top3_24h = api.dnsfilter.get_most_threats(3, 24)
+
     return render_template("index.html",
         open_tickets=len(open_tickets),
         unassigned_tickets=len(unassigned_tickets),
@@ -181,7 +187,11 @@ def index():
         jobs_statuses=json.dumps(jobs_statuses),
         device_counts=json.dumps(device_counts),
         ruon_statuses=json.dumps(ruon_statuses),
-        ruon_alerts = len(api.ruon.get_alarms())
+        ruon_alerts = len(api.ruon.get_alarms()),
+        dnsfilter_numbers_2h = dnsfilter_numbers_2h,
+        dnsfilter_numbers_24h = dnsfilter_numbers_24h,
+        dnsfilter_top3_2h = dnsfilter_top3_2h,
+        dnsfilter_top3_24h = dnsfilter_top3_24h
         )
 
 
