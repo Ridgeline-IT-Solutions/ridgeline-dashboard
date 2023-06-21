@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import time
 import json
+from api.caching import *
 
 load_dotenv()
 URL = "https://192.168.100.2/api/v1/"
@@ -96,9 +97,11 @@ def counts() -> dict:
         if ret[val] < 0:
             ret[val] = 0
 
+    cache('comet/counts.json', ret)
+
     return ret
 
-def get_jobs_24h():
+def update_jobs():
     """Get all jobs in the last 24 hours.
 
     Args:
@@ -113,11 +116,15 @@ def get_jobs_24h():
         "Start": yesterday,
         "End": now
     }
-    return _request_admin('get-jobs-for-date-range', data)
+    req = _request_admin('get-jobs-for-date-range', data)
+
+    cache('comet/jobs.json', req)
+
+    return req
 
 def get_jobs_status(jobs: dict = None):
     if not jobs:
-        jobs = get_jobs_24h()
+        jobs = get_cache('comet/jobs.json', datetime.timedelta(minutes=10), update_jobs)
 
     statuses = {
         "Total": len(jobs),
@@ -145,22 +152,7 @@ def get_jobs_status(jobs: dict = None):
 
     return statuses
 
-def update_cache():
-    jobs = get_jobs_24h()
-
-    with open('cache/comet/jobs.json', 'w+') as f:
-            json.dump(jobs, f)
-
-    return jobs
-
-def get_cached_jobs():
-    jobs = {}
-    try:
-        # try to read from jobs.json
-        with open('cache/comet/jobs.json', 'r') as f:
-            jobs = json.load(f)
-    except:
-        # if no jobs.json, force update the cache
-        jobs = update_cache()
+def get_jobs():
+    jobs = get_cache('comet/jobs.json', datetime.timedelta(minutes=10), update_jobs)
 
     return jobs

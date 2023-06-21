@@ -2,6 +2,7 @@ import requests
 import xmltodict
 import os
 from dotenv import load_dotenv
+from api.caching import *
 
 load_dotenv()
 
@@ -22,6 +23,8 @@ def get_agents():
     for val in data_raw['rss']['channel']['item']:
         data[val['title']] = _get_status_from(val['description'])
 
+    cache('ruon/agents.json', data)
+
     return data
 
 def get_alarms():
@@ -35,5 +38,7 @@ def get_alarms():
             data[parsed[0]] = parsed[1]
     except:
         pass
-        
+    
+    cache('ruon/alarms.json', data)
+
     return data

@@ -7,6 +7,8 @@ import json
 import base64
 from datetime import datetime, timedelta, timezone
 
+from api.caching import *
+
 load_dotenv()
 
 # Data warehouse (odata) API endpoint
@@ -23,23 +25,6 @@ def data_request(query: str) -> dict:
     request = requests.get(ENDPOINT + query, headers=HEADERS)
     return request.json()['value']
 
-def update_cache() -> None:
-    """
-    Updates all Kaseya API caches.
-
-    Args:
-        None
-    
-    Returns:
-        None
-
-    Raises:
-        None
-    """
-    update_agents_cache()
-    update_patches_cache()
-    update_alarms_cache()
-
 def update_agents_cache() -> dict:
     """
     Pulls agents from Kaseya API and updates agents.json
@@ -55,8 +40,7 @@ def update_agents_cache() -> dict:
     """
     agents = data_request("Agents?$orderby=GroupId")
 
-    with open('cache/kaseya/agents.json', 'w+') as f:
-            json.dump(agents, f)
+    cache('kaseya/agents.json', agents)
 
     return agents
 
@@ -74,14 +58,7 @@ def get_agents() -> dict:
     Raises:
         None
     """
-    agents = {}
-    try:
-        # try to read from agents.json
-        with open('cache/kaseya/agents.json', 'r') as f:
-            agents = json.load(f)
-    except:
-        # if no agents.json, force update the cache
-        agents = update_agents_cache()
+    agents = get_cache('kaseya/agents.json', timedelta(minutes=10), update_agents_cache)
 
     return agents
 
@@ -101,8 +78,7 @@ def update_patches_cache() -> dict:
     """
     agents = data_request("SoftwareManagementByAgentStats?$orderby=GroupName")
 
-    with open('cache/kaseya/patches.json', 'w+') as f:
-            json.dump(agents, f)
+    cache('kaseya/patches.json', agents)
 
     return agents
 
@@ -119,15 +95,7 @@ def get_patches() -> dict:
     Raises:
         None
     """
-    agents = {}
-
-    try:
-        # try to read from patches.json
-        with open('cache/kaseya/patches.json', 'r') as f:
-            agents = json.load(f)
-    except:
-        # if no patches.json, force update the cache
-        agents = update_patches_cache()
+    agents = get_cache('kaseya/patches.json', timedelta(minutes=10), update_patches_cache)
 
     return agents
 
@@ -146,8 +114,7 @@ def update_alarms_cache() -> dict:
     """
     alarms = data_request("MonitorAlarms")
 
-    with open('cache/kaseya/alarms.json', 'w+') as f:
-            json.dump(alarms, f)
+    cache('kaseya/alarms.json', alarms)
 
     return alarms
 
@@ -164,15 +131,7 @@ def get_alarms():
     Raises:
         None
     """
-    alarms = {}
-
-    try:
-        # try to read from alarms.json
-        with open('cache/kaseya/alarms.json', 'r') as f:
-            alarms = json.load(f)
-    except:
-        # if no alarms.json, force update the cache
-        alarms = update_alarms_cache()
+    alarms = get_cache('kaseya/alarms.json', timedelta(minutes=10), update_alarms_cache)
 
     return alarms
 

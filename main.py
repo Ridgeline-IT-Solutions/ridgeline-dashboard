@@ -5,75 +5,27 @@ import api.kaseya
 import api.comet
 import api.ruon
 import api.dnsfilter
+from api.caching import get_cache
 from flask import Flask, render_template
-
-from threading import Thread
 
 app = Flask(__name__)
 
-def get_cache():
-    """
-    Updates all caches.
-
-    Args:
-        None
-
-    Returns:
-        None
-
-    Raises:
-        None
-    """
-    print("Retrieving data from Mojo...")
-    try:
-        t1 = datetime.now()
-        api.mojo.get_cache()
-        t2 = datetime.now()
-        print(f"Mojo cache updated! Time: {t2 - t1}")
-    except:
-        print(f"Mojo cache update failed!")
-
-    print("Retrieving data from Kaseya...")
-    try:
-        t1 = datetime.now()
-        api.kaseya.update_cache()
-        t2 = datetime.now()
-        print(f"Kaseya cache updated! Time: {t2 - t1}")
-    except:
-        print(f"Mojo cache update failed!")
-
-    print("Retrieving data from Comet...")
-    try:
-        t1 = datetime.now()
-        api.comet.update_cache()
-        t2 = datetime.now()
-        print(f"Comet cache updated! Time: {t2 - t1}")
-    except:
-        print(f"Comet cache update failed!")
-
-def update_cache():
-    from time import sleep
-    while True:
-        get_cache()
-        sleep(600) # sleep for 10 mins
-
-
 @app.route("/")
 def index():
-    all_tickets = api.mojo.get_cached_tickets()
-    all_users = api.mojo.get_cached_users()
-    all_groups = api.mojo.get_cached_groups()
-    jobs = api.comet.get_cached_jobs()
+    all_tickets = api.mojo.get_tickets()
+    all_users = api.mojo.get_users()
+    all_groups = api.mojo.get_groups()
+    jobs = api.comet.get_jobs()
     jobs_statuses = api.comet.get_jobs_status(jobs)
-    device_counts = api.comet.counts()
-    ruon_agents = api.ruon.get_agents()
+    device_counts = get_cache('comet/counts.json', timedelta(minutes = 10), api.comet.counts)
+    ruon_agents = get_cache('ruon/agents.json', timedelta(minutes = 10), api.ruon.get_agents)
 
     open_tickets = []
     unassigned_tickets = []
     inactive_tickets = []
     waiting_tickets = []
 
-    for ticket in all_tickets:
+    for ticket in all_tickets.values():
         if ticket['status_id'] < 60:
             open_tickets.append(ticket)
 
@@ -91,7 +43,7 @@ def index():
     turnarounds = []
     turnarounds_30d = []
 
-    for ticket in all_tickets:
+    for ticket in all_tickets.values():
         # if ticket was created today
         if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['created_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=1):
             created_1d += 1
@@ -156,8 +108,8 @@ def index():
     for agent in ruon_agents:
         ruon_statuses[ruon_agents[agent]] += 1
 
-    dnsfilter_numbers_2h = api.dnsfilter.get_total_stats(2)
-    dnsfilter_numbers_24h = api.dnsfilter.get_total_stats(24)
+    dnsfilter_numbers_2h = get_cache('dnsfilter/total_stats_2.json', timedelta(minutes=10), api.dnsfilter._get_total_stats, (2))
+    dnsfilter_numbers_24h = get_cache('dnsfilter/total_stats_24.json', timedelta(minutes=10), api.dnsfilter._get_total_stats, (24))
     dnsfilter_top3_2h = api.dnsfilter.get_most_threats(3, 2)
     dnsfilter_top3_24h = api.dnsfilter.get_most_threats(3, 24)
 
@@ -187,7 +139,7 @@ def index():
         jobs_statuses=json.dumps(jobs_statuses),
         device_counts=json.dumps(device_counts),
         ruon_statuses=json.dumps(ruon_statuses),
-        ruon_alerts = len(api.ruon.get_alarms()),
+        ruon_alerts = len(get_cache('ruon/alarms.json', timedelta(minutes=10), api.ruon.get_alarms)),
         dnsfilter_numbers_2h = dnsfilter_numbers_2h,
         dnsfilter_numbers_24h = dnsfilter_numbers_24h,
         dnsfilter_top3_2h = dnsfilter_top3_2h,
@@ -196,6 +148,4 @@ def index():
 
 
 if __name__ == "__main__":
-    t = Thread(target=update_cache, daemon=True, name='Background Cache Updates')
-    t.start()
     app.run(debug=True)

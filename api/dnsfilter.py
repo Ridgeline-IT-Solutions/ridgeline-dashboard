@@ -5,6 +5,8 @@ import os
 from dotenv import load_dotenv
 import json
 
+from api.caching import *
+
 load_dotenv()
 
 def _authenticate():
@@ -34,28 +36,17 @@ def _authenticate():
     # request the access_token
     token_request = requests.post('https://dnsfilter.auth0.com/oauth/token', data=data)
     token = token_request.json()
-    token['last_updated'] = datetime.datetime.now().timestamp()
 
-    # save to auth.json
-    with open('cache/dnsfilter/auth.json', 'w+') as f:
-        json.dump(token, f)
-    
+    cache('dnsfilter/auth.json', token)
+
     return f'{token["token_type"]} {token["access_token"]}'
 
 def _get_token():
-    """Validate cached access token, and get a new one if it's expired or doesn't exist."""
-    try:
-        with open('cache/dnsfilter/auth.json', 'r+') as f:
-            token = json.load(f)
-            if datetime.datetime.fromtimestamp(token['last_updated'] + token['expires_in']) < datetime.datetime.now():
-                #print('out of date')
-                return _authenticate()
-            else:
-                #print('up to date')
-                return f'{token["token_type"]} {token["access_token"]}'
-    except:
-        #print('no token')
-        return _authenticate()
+    cache = get_cache('dnsfilter/auth.json', datetime.timedelta(minutes=10), _authenticate)
+
+    token = f'{cache["token_type"]} {cache["access_token"]}'
+
+    return token
 
 def _get_organizations():
     request = requests.get('https://api.dnsfilter.com/v1/organizations', headers={'authorization': _get_token()}, data={'basic_info':1})
@@ -64,49 +55,38 @@ def _get_organizations():
         if not org['attributes']['canceled']:
             organizations[org['id']] = org['attributes']['name']
 
+    cache('dnsfilter/organizations.json', organizations)
+
     return organizations
 
-# def get_total_requests(offset: int):
-#     time_from = (datetime.datetime.now() - datetime.timedelta(days=offset)).isoformat() + "Z"
-#     request = requests.get('https://api.dnsfilter.com/v1/traffic_reports/total_requests', headers={'authorization': _get_token()}, data={'msp_id':1557,'from': time_from})
-#     retval = 0
-#     for bucket in request.json()['data']['values']:
-#         retval += bucket['total']
-
-#     return retval
-
-# def get_total_threats(offset: int):
-#     time_from = (datetime.datetime.now() - datetime.timedelta(days=offset)).isoformat() + "Z"
-#     request = requests.get('https://api.dnsfilter.com/v1/traffic_reports/total_threats', headers={'authorization': _get_token()}, data={'organization_ids':','.join(_get_organizations().keys()),'from': time_from})
-#     retval = 0
-#     for bucket in request.json()['data']['values']:
-#         retval += bucket['total']
-
-#     return retval
-
-# print(get_total_requests(7))
-# print(get_total_threats(7))
-
-def get_total_stats(offset: int = 24):
+def _get_total_stats(offset: int = 24):
     time_from = (datetime.datetime.now() - datetime.timedelta(hours=offset)).isoformat() + "Z"
     request = requests.get('https://api.dnsfilter.com/v1/traffic_reports/total_organizations_stats', headers={'authorization': _get_token()}, data={'msp_id':1557,'from': time_from})
-    return {
+    
+    ret = {
         'total': request.json()['data']['total_requests'], 
         'allowed': request.json()['data']['allowed_requests'], 
         'blocked': request.json()['data']['blocked_requests'],
         'threats': request.json()['data']['threat_requests']
     }
 
-def get_breakdown_stats(offset: int = 24):
+    cache(f'dnsfilter/total_stats_{offset}.json', ret)
+    
+    return ret
+
+def _get_breakdown_stats(offset: int = 24):
     time_from = (datetime.datetime.now() - datetime.timedelta(hours=offset)).isoformat() + "Z"
-    request = requests.get('https://api.dnsfilter.com/v1/traffic_reports/total_threats', headers={'authorization': _get_token()}, data={'organization_ids':','.join(_get_organizations().keys()),'show_individual_networks':1,'from': time_from})
+    request = requests.get('https://api.dnsfilter.com/v1/traffic_reports/total_threats', headers={'authorization': _get_token()}, data={'organization_ids':','.join(get_cache('dnsfilter/organizations.json', datetime.timedelta(minutes=10), _get_organizations).keys()),'show_individual_networks':1,'from': time_from})
     ret = {}
     for bucket in request.json()['data']['values']:
         if bucket['network_name'] not in ret:
             ret[bucket['network_name']] = 0
         ret[bucket['network_name']] += bucket['total']
+
+    cache(f'dnsfilter/breakdown_stats_{offset}.json', ret)
+
     return ret
 
 def get_most_threats(top: int = 3, offset: int = 24):
-    stats = get_breakdown_stats(offset)
+    stats = get_cache(f'dnsfilter/breakdown_stats_{offset}.json', datetime.timedelta(minutes=10), _get_breakdown_stats, (offset))
     return dict(sorted(stats.items(), key=lambda x: x[1], reverse=True)[:top])
