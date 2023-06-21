@@ -8,6 +8,15 @@ import api.dnsfilter
 from api.caching import get_cache
 from flask import Flask, render_template
 
+import os
+
+os.makedirs('cache', exist_ok=True)
+os.makedirs('cache/mojo', exist_ok=True)
+os.makedirs('cache/comet', exist_ok=True)
+os.makedirs('cache/dnsfilter', exist_ok=True)
+os.makedirs('cache/kaseya', exist_ok=True)
+os.makedirs('cache/ruon', exist_ok=True)
+
 app = Flask(__name__)
 
 @app.route("/")

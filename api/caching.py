@@ -13,16 +13,19 @@ def cache(path: str, data: dict):
 
 def get_cache(path: str, expiration: datetime.timedelta = None, update_function = None, func_args: tuple = ()):
     """Get data from the cache. If there's a defined expiration, run the defined update_function. If one of them isn't defined, the update/expiration will not be checked."""
+    cached_data = {}
+    
     try:
         with open(f'cache/{path}', 'r+') as f:
             cached_data = json.load(f)
     except:
+        # if file doesn't exist/fails to load, get it again
         if hasattr(func_args, '__iter__'):
             data = update_function(*func_args)
         else:
             data = update_function(func_args)
 
-            return data
+        return data
 
     if expiration and update_function:
         # if the cache is expired, run the update_function

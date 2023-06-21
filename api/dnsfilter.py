@@ -44,6 +44,9 @@ def _authenticate():
 def _get_token():
     cache = get_cache('dnsfilter/auth.json', datetime.timedelta(minutes=10), _authenticate)
 
+    if isinstance(cache, str):
+        return cache
+
     token = f'{cache["token_type"]} {cache["access_token"]}'
 
     return token
