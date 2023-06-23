@@ -47,6 +47,9 @@ def _get_token():
     if isinstance(cache, str):
         return cache
 
+    if 'error' in cache.keys():
+        return None
+
     token = f'{cache["token_type"]} {cache["access_token"]}'
 
     return token

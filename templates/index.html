@@ -403,8 +403,8 @@
 
                     var data = google.visualization.arrayToDataTable([
                         ['Status', 'Count'],
-                        ['Online', ruon_statuses.ON],
-                        ['Offline', ruon_statuses.OFF]
+                        ['Online', ruon_statuses.ON - {{ruon_alerts}}],
+                        ['Offline', {{ruon_alerts}}]
                     ]);
 
                     var options = {

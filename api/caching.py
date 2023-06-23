@@ -31,12 +31,17 @@ def get_cache(path: str, expiration: datetime.timedelta = None, update_function 
         # if the cache is expired, run the update_function
         if datetime.datetime.now() - expiration > datetime.datetime.fromtimestamp(cached_data['last_updated']):
             #print('out of date')
-            if hasattr(func_args, '__iter__'):
-                data = update_function(*func_args)
-            else:
-                data = update_function(func_args)
+            try:
+                if hasattr(func_args, '__iter__'):
+                    data = update_function(*func_args)
+                else:
+                    data = update_function(func_args)
 
-            return data
+                return data
+            except:
+                print('cache update failed!')
+                # out of date but update failed for some reason, just return the current data
+                pass
 
 
     return cached_data['data']
