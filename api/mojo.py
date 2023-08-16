@@ -16,11 +16,12 @@ def update_tickets() -> dict:
     tickets = {}
     for i in range(1, 100):
         this_page = requests.get(f"{request}&page={i}", headers=HEADERS)
-        if len(this_page.json()) < 1:
+        page_json = this_page.json()
+        if len(page_json) < 1:
             break
         else:
             # set the id as the key for the object
-            for ticket in this_page.json():
+            for ticket in page_json:
                 tickets[ticket['id']] = ticket
 
     cache('mojo/tickets.json', tickets)

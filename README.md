@@ -30,4 +30,13 @@ COMET_PASS    = 'comet_password'
 
 # R-U-ON
 RUON_KEY      = 'ruon_account_key'
+
+# DNSFilter
+DNSF_USER     = 'dnsfilter_user_email'
+DNSF_PASS     = 'dnsfilter_user_password'
+DNSF_2FAK     = 'dnsfilter_user_totp'
+
+# Huntress
+HUNTRESS_PUBLIC = 'huntress_public_key'
+HUNTRESS_SECRET = 'huntress_secret_key'
 ```

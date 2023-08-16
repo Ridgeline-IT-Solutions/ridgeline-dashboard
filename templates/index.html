@@ -119,22 +119,6 @@
                 <script>document.write(conditionalColor({{ kill_ratio_30d }}, 0.8, 1.0, true));</script>
             </span>
         </div>
-        <div class="statistic-container" style="">
-            <span class="statistic-container-header">
-                Avg Turnaround (7d)
-            </span>
-            <span class="statistic-container-data">
-                {{avg_turnaround}}
-            </span>
-        </div>
-        <div class="statistic-container" style="">
-            <span class="statistic-container-header">
-                Avg Turnaround (30d)
-            </span>
-            <span class="statistic-container-data">
-                {{avg_turnaround_30d}}
-            </span>
-        </div>
         <script>
             var modal = document.getElementById("popup-table");
             var modalHeader = document.getElementById("popup-table-header");
@@ -282,9 +266,9 @@
             </span>
         </div>
         <div class="statistic-container clickable" id="out_of_date_agents_container"
-            onclick="openOODAgentTable('Out of Date Machines (4+ Missing Patches)', {{ood_agents_json}})">
+            onclick="openOODAgentTable('Machines Missing 4+ Patches', {{ood_agents_json}})">
             <span class="statistic-container-header">
-                Out of Date
+                Pending Patches
             </span>
             <span class="statistic-container-data" id="out_of_date_agents">
                 <script>document.write(conditionalColor({{ ood_agents }}, 100, 50));</script>
@@ -297,6 +281,15 @@
             </span>
             <span class="statistic-container-data" id="recent_alarms">
                 <script>document.write(conditionalColor({{ recent_alarms }}, 5, 1));</script>
+            </span>
+        </div>
+        <div class="statistic-container clickable" id="out_of_date_agents_container"
+            onclick="openOODAgentTable('Machines Missing 4+ Patches', {{critical_agents_json}})">
+            <span class="statistic-container-header">
+                Pending Critical Patches
+            </span>
+            <span class="statistic-container-data" id="out_of_date_agents">
+                <script>document.write(conditionalColor({{ critical_agents }}, 40, 20));</script>
             </span>
         </div>
         <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 1/3;">
@@ -554,11 +547,11 @@
         </div>
         <div class="statistic-container" style="grid-row: 3 / 4; grid-column: 1/3;">
             <span class="statistic-container-header">
-                Top 3 w/ Most Threats
+                Top 5 w/ Most Threats
             </span>
-            {% for item in dnsfilter_top3_2h %}
+            {% for item in dnsfilter_top5_2h %}
             <div class="statistic-container">
-                <span>{{ item }} - {{ dnsfilter_top3_2h[item] }} Threats</span> 
+                <span>{{ item }} - {{ dnsfilter_top5_2h[item] }} Threats</span> 
             </div>
             {% endfor %}
         </div>
@@ -583,11 +576,11 @@
         </div>
         <div class="statistic-container" style="grid-row: 3 / 4; grid-column: 3/5;">
             <span class="statistic-container-header">
-                Top 3 w/ Most Threats
+                Top 5 w/ Most Threats
             </span>
-            {% for item in dnsfilter_top3_24h %}
+            {% for item in dnsfilter_top5_24h %}
             <div class="statistic-container">
-                <span>{{ item }} - {{ dnsfilter_top3_24h[item] }} Threats</span> 
+                <span>{{ item }} - {{ dnsfilter_top5_24h[item] }} Threats</span> 
             </div>
             {% endfor %}
         </div>
@@ -608,6 +601,43 @@
             </span>
             <span class="statistic-container-data" id="recent_alarms">
                 <script>document.write(conditionalColor({{ ruon_alerts }}, 1, 2));</script>
+            </span>
+        </div>
+    </div>
+    <div class="data-container" style="grid-row:3/4; grid-column: 2/5;">
+        <span class="data-container-header">
+            Huntress Information
+        </span>
+        <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 1/2;">
+            <span class="statistic-container-header">
+            Total Agents
+            </span>
+            <span class="statistic-container-data" id="recent_alarms">
+                {{huntress_agents_count}}
+            </span>
+        </div>
+        <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 2/3;">
+            <span class="statistic-container-header">
+                Active Incidents
+                <br>
+                Critical | High | Low
+            </span>
+            <span class="statistic-container-data" id="recent_alarms">
+                <script>document.write(conditionalColor({{ huntress_incidents_critical }}, 1, 2));</script>
+                |
+                <script>document.write(conditionalColor({{ huntress_incidents_high }}, 1, 2));</script>
+                |
+                <script>document.write(conditionalColor({{ huntress_incidents_low }}, 2, 1));</script>
+            </span>
+        </div>
+        <div class="statistic-container" style="grid-row: 2 / 4; grid-column: 3/4;">
+            <span class="statistic-container-header">
+                Resolved Incidents
+                <br>
+                7d | 30d | 3m
+            </span>
+            <span class="statistic-container-data" id="recent_alarms">
+                {{ huntress_incidents_resolved_7d }} | {{ huntress_incidents_resolved_30d }} | {{ huntress_incidents_resolved_90d }}
             </span>
         </div>
     </div>
