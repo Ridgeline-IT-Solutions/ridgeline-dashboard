@@ -1,0 +1,116 @@
+html {
+    background-color: #202020;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #cacaca;
+}
+
+body {
+    margin: 0;
+}
+
+#map {
+    height: 100%;
+}
+
+nav {
+    z-index: 1000;
+    position: fixed;
+    top: 15;
+    right: 15;
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 0;
+    box-shadow: 0 8px 16px 0 #000000;
+}
+
+nav a {
+    font-size: 16pt;
+    display: inline-block;
+    background-color: #202020;
+    color: #cacaca;
+    text-decoration: none;
+    padding: 5px;
+}
+
+nav a:hover {
+    background-color: #cacaca;
+    color: #202020;
+    transition: 0.3s;
+}
+
+nav a:not(:first-child) {
+    border-left: 1px solid #cacaca;
+}
+
+.table-input {
+    border: none;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #cacaca;
+    background-color: #404040;
+}
+
+.td-buttons {
+    text-align: right;
+}
+
+button {
+    border: 1px solid #404040;
+    border-radius: 5px;
+    color: #ffffff;
+    padding: 5px;
+}
+
+button:hover {
+    cursor: pointer;
+}
+
+.btn-edit {
+    background-color: #4080ff;
+}
+.btn-edit:hover {
+    background-color: #60a0ff;
+}
+
+.btn-create {
+    background-color: #40cc40;
+}
+.btn-create:hover {
+    background-color: #60dd60;
+}
+
+.btn-delete {
+    background-color: #ff4040;
+}
+.btn-delete:hover {
+    background-color: #ff6060;
+}
+
+thead, th {
+    position: sticky;
+    background-color: #202020;
+    border-bottom: 1px solid #404040;
+    top: -10;
+    box-shadow: 0px 1px 2px 0px #000000;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #404040;
+}
+
+.container {
+    position: absolute;
+    top: 60px;
+}
+
+.container h1 {
+    margin: 0;
+    position: absolute;
+    top: -50px;
+}

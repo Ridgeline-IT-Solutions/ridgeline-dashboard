@@ -1,0 +1,68 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="{{url_for('static', filename='css/map_stylesheet.css')}}" />
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>Ridgeline Dashboard - Map Client List</title>
+</head>
+
+<body>
+    <script src="{{ url_for('js_functions') }}"></script>
+    <nav>
+        <a href="/map">Map</a>
+        <a href="/" target="_blank">Dashboard</a>
+    </nav>
+    <div class="container">
+        <h1>Client Table</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Abbreviation</th>
+                    <th>Business Name</th>
+                    <th>Address</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>ZIP Code</th>
+                    <th>Geographic Coordinates</th>
+                    <th>Server GUID</th>
+                    <th>IP Address</th>
+                    <th>Tools</th>
+                </tr>
+            </thead>
+            <tbody id="client-table">
+                <tr>
+                    <td><input class="table-input" id="new-client-abbrev"></input></td>
+                    <td><input class="table-input" id="new-client-name"></input></td>
+                    <td><input class="table-input" id="new-client-address"></input></td>
+                    <td><input class="table-input" id="new-client-city"></input></td>
+                    <td><select class="table-input" id="new-client-state">
+                        <script>
+                            for (var state of states) {
+                                state_option = document.createElement('option')
+                                state_option.value = state['abbrev']
+                                state_option.textContent = state['name']
+                                if (state['abbrev'] == "CA") {
+                                    state_option.selected = true
+                                }
+                                document.getElementById('new-client-state').appendChild(state_option)
+                            }
+                        </script>
+                    </select></td>
+                    <td><input class="table-input" id="new-client-zip" type="number"></input></td>
+                    <td>
+                        <input class="table-input" id="new-client-lat" type="number"></input>°N
+                        <input class="table-input" id="new-client-lon" type="number"></input>°E
+                    </td>
+                    <td><input class="table-input" id="new-client-server" type="number"></input></td>
+                    <td><input class="table-input" id="new-client-ipv4"></input></td>
+                    <td class="td-buttons"><button class="btn-create" onclick="submitClient()">Create</button></td>
+                </tr>
+            </tbody>
+            <script>
+                updateClients();
+            </script>
+        </table>
+    </div>
+</body>
+
+</html>
