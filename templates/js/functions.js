@@ -51,6 +51,63 @@ const states = [
     { name: 'Wyoming', abbrev: 'WY' }
 ];
 
+function conditionalColor(value, red, yellow, invert = false) {
+    if (value < 0) {
+        return "-";
+    }
+    out = "<span style='color:";
+
+    if (invert) {
+        if (value <= red) {
+            out += "red;'>" + value + "</span>";
+        } else if (value <= yellow) {
+            out += "yellow;'>" + value + "</span>";
+        } else {
+            out += "green;'>" + value + "</span>";
+        }
+    } else {
+        if (value >= red) {
+            out += "red;'>" + value + "</span>";
+        } else if (value >= yellow) {
+            out += "yellow;'>" + value + "</span>";
+        } else {
+            out += "green;'>" + value + "</span>";
+        }
+    }
+    return out;
+}
+
+function timeSince(date) {
+
+    var seconds = Math.floor((new Date() - date) / 1000);
+
+    var interval = seconds / 31536000;
+
+    if (interval > 1) {
+        if (interval > 5) {
+            return "Never or Unknown"
+        }
+        return Math.floor(interval) + " years ago";
+    }
+    interval = seconds / 2592000;
+    if (interval > 1) {
+        return Math.floor(interval) + " months ago";
+    }
+    interval = seconds / 86400;
+    if (interval > 1) {
+        return Math.floor(interval) + " days ago";
+    }
+    interval = seconds / 3600;
+    if (interval > 1) {
+        return Math.floor(interval) + " hours ago";
+    }
+    interval = seconds / 60;
+    if (interval > 1) {
+        return Math.floor(interval) + " minutes ago";
+    }
+    return Math.floor(seconds) + " seconds ago";
+}
+
 class Client extends HTMLTableRowElement {
     idBlock = document.createElement('td');
 

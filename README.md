@@ -6,6 +6,7 @@
   - requests
   - flask
   - xmltodict
+  - geopy (for map)
 
 ## Installation/Run Instructions
 1. Clone code
