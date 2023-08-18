@@ -82,10 +82,15 @@ def counts() -> dict:
         "offline": 0,
         "outdated": 0
     }
-    total = _request_admin('list-users-full').values()
+    total = _request_admin('list-users-full')
     active = _request_admin('dispatcher/list-active').values()
     
-    ret['total'] = len(total)
+    ret['total'] = 0
+
+    for org in total:
+        for device in total[org]['Devices']:
+            ret['total'] += 1
+
     ret['online'] = len(active)
     ret['offline'] = len(total) - len(active)
 

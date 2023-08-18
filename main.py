@@ -130,8 +130,10 @@ def index():
             recent_alarms.append(alarm)
 
     ruon_statuses = {
-        "ON": 0,
-        "OFF": 0
+        "Okay": 0,
+        "Critical": 0,
+        "Major": 0,
+        "Minor": 0
     }
     
     for agent in ruon_agents:

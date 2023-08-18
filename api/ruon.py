@@ -9,19 +9,19 @@ load_dotenv()
 KEY = os.getenv('RUON_KEY')
 
 def get_agents():
-    def _get_status_from(val: str):
+    def _get_parsed_cdata(val: str):
         parsed = {}
         for field in val.split('<br>'):
             parse = field.split(': ')
             parsed[parse[0]] = parse[1]
-        return parsed['State']
+        return parsed
 
     endpoint = "https://rss.r-u-on.com/rssagents?id=" + KEY
     request = requests.get(endpoint)
     data_raw = xmltodict.parse(request.content)
     data = {}
     for val in data_raw['rss']['channel']['item']:
-        data[val['title']] = _get_status_from(val['description'])
+        data[val['title']] = _get_parsed_cdata(val['description'])['Severity']
 
     cache('ruon/agents.json', data)
 
