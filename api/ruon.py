@@ -21,7 +21,7 @@ def get_agents():
     data_raw = xmltodict.parse(request.content)
     data = {}
     for val in data_raw['rss']['channel']['item']:
-        data[val['title']] = _get_parsed_cdata(val['description'])['Severity']
+        data[val['title']] = _get_parsed_cdata(val['description'])
 
     cache('ruon/agents.json', data)
 

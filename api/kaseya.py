@@ -58,9 +58,27 @@ def get_agents() -> dict:
     Raises:
         None
     """
-    agents = get_cache('kaseya/agents.json', timedelta(minutes=10), update_agents_cache)
+    agents = get_cache('kaseya/agents.json', timedelta(minutes=1), update_agents_cache)
 
     return agents
+
+def get_agents_online(agents):
+    """
+    Search for specific agents (by GUID) for the map
+    """
+    data = get_agents()
+
+    result = {}
+    for agent in agents:
+        for agent_result in data:
+            if agent_result['AgentId'] == str(agents[agent]):
+                result[agent] = agent_result['IsOnline']
+        
+        # wasn't found
+        if agent not in result:
+            result[agent] = 0
+    
+    return result
 
 
 def update_patches_cache() -> dict:
