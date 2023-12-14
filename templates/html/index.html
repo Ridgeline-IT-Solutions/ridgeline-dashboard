@@ -40,166 +40,68 @@
         <span class="data-container-header">
             Mojo Information
         </span>
-        <div class="statistic-container clickable" id="open_tickets_container"
-            onclick="openTicketTable('Open Tickets', {{open_tickets_json}})">
+        <div class="statistic-container" id="open_tickets_container">
             <span class="statistic-container-header">
                 Open Tickets
             </span>
             <span class="statistic-container-data" id="open_tickets">
-                <script>document.write(conditionalColor({{ open_tickets }}, 50, 25));</script>
+                <script>document.write(conditionalColor({{ open_tickets }}, 80, 40));</script>
             </span>
         </div>
-        <div class="statistic-container clickable" id="unassigned_tickets_container"
-            onclick="openTicketTable('Unassigned Tickets', {{unassigned_tickets_json}})">
+        <div class="statistic-container" id="helpdesk_tickets_container">
+            <span class="statistic-container-header">
+                Help Desk
+            </span>
+            <span class="statistic-container-data" id="helpdesk_tickets">
+                <script>document.write(conditionalColor({{ hd_tickets }}, 15, 7));</script>
+            </span>
+        </div>
+        <div class="statistic-container" id="inactive_tickets_container">
+            <span class="statistic-container-header">
+                Projects
+            </span>
+            <span class="statistic-container-data" id="inactive_tickets">
+                <script>document.write(conditionalColor({{ project_tickets }}, 20, 10));</script>
+            </span>
+        </div>
+        <div class="statistic-container" id="internalproject_tickets_container">
+            <span class="statistic-container-header">
+                Internal Projects
+            </span>
+            <span class="statistic-container-data" id="internalproject_tickets">
+                <script>document.write(conditionalColor({{ internalproject_tickets }}, 20, 10));</script>
+            </span>
+        </div>
+        <div class="statistic-container">
             <span class="statistic-container-header">
                 Unassigned Tickets
             </span>
             <span class="statistic-container-data" id="unassigned_tickets">
-                <script>document.write(conditionalColor({{ unassigned_tickets }}, 5, 2));</script>
-            </span>
-        </div>
-        <div class="statistic-container clickable" id="inactive_tickets_container"
-            onclick="openTicketTable('Tickets with no update in 15+ Days', {{inactive_tickets_json}})">
-            <span class="statistic-container-header">
-                Inactive Tickets
-            </span>
-            <span class="statistic-container-data" id="inactive_tickets">
-                <script>document.write(conditionalColor({{ inactive_tickets }}, 8, 4));</script>
-            </span>
-        </div>
-        <div class="statistic-container clickable" id="waiting_tickets_container"
-            onclick="openTicketTable('Tickets On Hold or Waiting for Customer', {{waiting_tickets_json}})">
-            <span class="statistic-container-header">
-                On Hold
-            </span>
-            <span class="statistic-container-data" id="waiting_tickets">
-                <script>document.write(conditionalColor({{ waiting_tickets }}, 20, 10));</script>
+                <script>document.write(conditionalColor({{ unassigned_tickets }}, 6, 3));</script>
             </span>
         </div>
         <div class="statistic-container">
             <span class="statistic-container-header">
-                Kill Ratio (24h)
+                Active Help Desk
             </span>
             <span class="statistic-container-data">
-                <script>document.write(conditionalColor({{ kill_ratio_1d }}, 0.8, 1.0, true));</script>
+                <script>document.write(conditionalColor({{ activehd_tickets }}, 0.8, 1.0, true));</script>
             </span>
         </div>
         <div class="statistic-container">
             <span class="statistic-container-header">
-                Kill Ratio (30d)
+                Kill Ratio (7d)
             </span>
             <span class="statistic-container-data">
-                <script>document.write(conditionalColor({{ kill_ratio_30d }}, 0.8, 1.0, true));</script>
+                <script>document.write(conditionalColor({{ kill_ratio }}, 0.8, 1.0, true));</script>
             </span>
         </div>
-        <script>
-            var modal = document.getElementById("popup-table");
-            var modalHeader = document.getElementById("popup-table-header");
-            var modalTable = document.getElementById("ticket-table");
-
-            var span = document.getElementsByClassName("close")[0];
-
-            var mojoClients = JSON.parse({{ users | tojson | safe}});
-            var mojoGroups = JSON.parse({{ groups | tojson | safe}});
-            var all_agents = JSON.parse({{ all_agents | tojson | safe}});
-
-            var getClient = function (id) {
-                for (var obj of mojoClients) {
-                    if (obj.id == id) {
-                        return obj;
-                    }
-                }
-            }
-
-            var getGroup = function (id) {
-                for (var obj of mojoGroups) {
-                    if (obj.id == id) {
-                        console.log(obj)
-                        return obj;
-                    }
-                }
-            }
-
-            function openTicketTable(title, data) {
-                modalHeader.innerHTML = title;
-
-                var table = "";
-
-                for (var obj of data) {
-                    if (obj.status_id < 60) {
-                        var statusLoc;
-                        var priorityLoc;
-
-                        if (obj.status_id == 10) {
-                            statusLoc = "New";
-                        } else if (obj.status_id == 20) {
-                            statusLoc = "In Progress";
-                        } else if (obj.status_id == 30) {
-                            statusLoc = "On Hold";
-                        } else if (obj.status_id == 40) {
-                            statusLoc = "<span style='color:mediumpurple'>Info. Requested</span>";
-                        } else if (obj.status_id == 50) {
-                            statusLoc = "Solved";
-                        }
-
-                        if (obj.priority_id == 10) {
-                            priorityLoc = "Emergency";
-                        } else if (obj.priority_id == 20) {
-                            priorityLoc = "Urgent";
-                        } else if (obj.priority_id == 30) {
-                            priorityLoc = "Normal";
-                        } else if (obj.priority_id == 40) {
-                            priorityLoc = "Low";
-                        }
-
-                        var agent = "";
-                        if (obj.assigned_to_id != null) {
-                            agent = getClient(obj.assigned_to_id);
-                        } else {
-                            agent = { 'first_name': '<i style=\"color:red\">Unassigned</i>', 'last_name': '' };
-                        }
-                        var customer = getGroup(obj.company_id);
-                        table +=
-                            "<tr><td><div class='popuptable-item'>" + customer.name +
-                            "</div></td><td><div class='popuptable-item'><a href='https://ridgelineitsolutions.mojohelpdesk.com/ma/#/tickets/" + obj.id + "' target='blank'>" + obj.title +
-                            "</a></div></td><td><div class='popuptable-item'>" + timeSince(new Date(obj.updated_on).getTime()) +
-                            "</div></td><td><div class='popuptable-item'>" + agent.first_name + " " + agent.last_name +
-                            "</div></td><td><div class='popuptable-item'>" + statusLoc +
-                            "</div></td><td><div class='popuptable-item'>" + priorityLoc +
-                            "</div></td></tr>";
-                    }
-                }
-
-                document.getElementById('ticket-table-head').innerHTML =
-                    "<th style='width:10%'>Customer</th>" +
-                    "<th style='width:50%'>Title</th>" +
-                    "<th style='width:10%'>Last Updated</th>" +
-                    "<th style='width:10%'>Assigned</th>" +
-                    "<th style='width:10%'>Status</th>" +
-                    "<th style='width:10%'>Priority</th>";
-
-                modalTable.innerHTML = table;
-
-                modal.style.display = "block";
-            }
-
-            span.onclick = function () {
-                modal.style.display = "none";
-            }
-
-            window.onclick = function (event) {
-                if (event.target == modal) {
-                    modal.style.display = "none";
-                }
-            }
-        </script>
     </div>
     <div class="data-container" style="grid-row:1/2; grid-column: 3/5;">
         <span class="data-container-header">
             Kaseya Information
         </span>
-        <div class="statistic-container clickable" id="inactive_agents_container"
-            onclick="openInactiveAgentTable('Inactive Agents (last check in 15+ days ago)', {{inactive_agents_json}})">
+        <div class="statistic-container" id="inactive_agents_container">
             <span class="statistic-container-header">
                 Inactive Agents
             </span>
@@ -207,8 +109,7 @@
                 <script>document.write(conditionalColor({{ inactive_agents }}, 20, 10));</script>
             </span>
         </div>
-        <div class="statistic-container clickable" id="out_of_date_agents_container"
-            onclick="openOODAgentTable('Machines Missing 4+ Patches', {{ood_agents_json}})">
+        <div class="statistic-container" id="out_of_date_agents_container">
             <span class="statistic-container-header">
                 Pending Patches
             </span>
@@ -216,8 +117,7 @@
                 <script>document.write(conditionalColor({{ ood_agents }}, 100, 50));</script>
             </span>
         </div>
-        <div class="statistic-container clickable" id="recent_alarms_container"
-            onclick="openAlarmsTable('Alarms in Last 24 Hours', {{recent_alarms_json}})">
+        <div class="statistic-container" id="recent_alarms_container">
             <span class="statistic-container-header">
                 Alarms (24h)
             </span>
@@ -225,8 +125,7 @@
                 <script>document.write(conditionalColor({{ recent_alarms }}, 5, 1));</script>
             </span>
         </div>
-        <div class="statistic-container clickable" id="out_of_date_agents_container"
-            onclick="openOODAgentTable('Machines Missing 4+ Patches', {{critical_agents_json}})">
+        <div class="statistic-container" id="out_of_date_agents_container">
             <span class="statistic-container-header">
                 Pending Critical Patches
             </span>
@@ -241,6 +140,7 @@
             <div class="chart" id="agents_chart" style="width: 300px; height: 200px;"></div>
             <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
             <script type="text/javascript">
+                var all_agents = JSON.parse({{ all_agents | tojson | safe}});
                 google.charts.load('current', { 'packages': ['corechart'] });
                 google.charts.setOnLoadCallback(drawChart);
                 google.charts.setOnLoadCallback(drawBackupsChart);
@@ -360,98 +260,6 @@
                 }
             </script>
         </div>
-        <script>
-            function openInactiveAgentTable(title, data) {
-                modalHeader.innerHTML = title;
-
-                var table = "";
-
-                for (var obj of data) {
-                    table +=
-                        "<tr><td><div class='popuptable-item'>" + obj.MachineId +
-                        "</div></td><td><div class='popuptable-item'>" + obj.MachineName +
-                        "</div></td><td><div class='popuptable-item'>" + obj.GroupId +
-                        "</div></td><td><div class='popuptable-item'>" + timeSince(new Date(obj.LastCheckInTime).getTime()) +
-                        "</div></td><td><div class='popuptable-item'>" + obj.MachineType +
-                        "</div></td><td><div class='popuptable-item'>" + obj.LastLoggedOnUser +
-                        "</div></td></tr>";
-
-                }
-
-                document.getElementById('ticket-table-head').innerHTML =
-                    "<th style='width:10%'>Agent</th>" +
-                    "<th style='width:10%'>Computer Name</th>" +
-                    "<th style='width:10%'>Machine Group</th>" +
-                    "<th style='width:10%'>Last Check In</th>" +
-                    "<th style='width:10%'>Machine Type</th>" +
-                    "<th style='width:10%'>Last Logged In User</th>";
-
-                modalTable.innerHTML = table;
-
-                modal.style.display = "block";
-            }
-
-            function openOODAgentTable(title, data) {
-                modalHeader.innerHTML = title;
-
-                var table = "";
-
-                for (var obj of data) {
-                    table +=
-                        "<tr><td><div class='popuptable-item'>" + obj.TotalVulnerabilitiesCount +
-                        "</div></td><td><div class='popuptable-item'>" + obj.MachineName +
-                        "</div></td><td><div class='popuptable-item'>" + obj.GroupName +
-                        "</div></td><td><div class='popuptable-item'>" + obj.ComplianceMessage +
-                        "</div></td><td><div class='popuptable-item'>" + obj.VulnerabilityCategory +
-                        "</div></td><td><div class='popuptable-item'>" + timeSince(new Date(obj.LastPatchDeploymentDateTime).getTime()) +
-                        "</div></td></tr>";
-
-                }
-
-                document.getElementById('ticket-table-head').innerHTML =
-                    "<th style='width:5%'>Number</th>" +
-                    "<th style='width:10%'>Agent</th>" +
-                    "<th style='width:10%'>Machine Group</th>" +
-                    "<th style='width:10%'>Message</th>" +
-                    "<th style='width:10%'>Category</th>" +
-                    "<th style='width:10%'>Last Patch Deployment</th>";
-
-                modalTable.innerHTML = table;
-
-                modal.style.display = "block";
-            }
-
-            function openAlarmsTable(title, data) {
-                modalHeader.innerHTML = title;
-
-                var table = "";
-
-                for (var obj of data) {
-                    table +=
-                        "<tr><td><div class='popuptable-item'>" + getAgentByID(obj.AgentId).MachineId +
-                        "</div></td><td><div class='popuptable-item'>" + obj.AlarmName +
-                        "</div></td><td><div class='popuptable-item' title='" + obj.AlarmMessage + "'>" + obj.AlarmSubject +
-                        "</div></td></tr>";
-                }
-
-                document.getElementById('ticket-table-head').innerHTML =
-                    "<th style='width:20%'>Agent</th>" +
-                    "<th style='width:20%'>Type</th>" +
-                    "<th style='width:60%'>Alarm Message (hover for more details)</th>";
-
-                modalTable.innerHTML = table;
-
-                modal.style.display = "block";
-            }
-
-            function getAgentByID(agent_id) {
-                for (var obj of all_agents) {
-                    if (obj.AgentId == agent_id) {
-                        return obj;
-                    }
-                }
-            }
-        </script>
     </div>
     <div class="data-container" style="grid-row:2/3; grid-column: 1/2;">
         <span class="data-container-header">

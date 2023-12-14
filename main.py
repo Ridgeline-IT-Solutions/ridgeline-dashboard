@@ -146,8 +146,6 @@ def check_alerts():
 @app.route("/")
 def index():
     all_tickets = api.mojo.get_tickets()
-    all_users = api.mojo.get_users()
-    all_groups = api.mojo.get_groups()
     jobs = api.comet.get_jobs()
     jobs_statuses = api.comet.get_jobs_status(jobs)
     device_counts = get_cache('comet/counts.json', timedelta(minutes = 10), api.comet.counts)
@@ -155,8 +153,13 @@ def index():
 
     open_tickets = []
     unassigned_tickets = []
-    inactive_tickets = []
-    waiting_tickets = []
+    hd_tickets = []
+    project_tickets = []
+    internalproject_tickets = []
+    activehd_tickets = []
+    
+    created_7d = 0
+    closed_7d = 0
 
     for ticket in all_tickets.values():
         if ticket['status_id'] < 60:
@@ -164,40 +167,29 @@ def index():
 
             if not ticket['assigned_to_id']:
                 unassigned_tickets.append(ticket)
-            if (datetime.utcnow() - datetime.strptime(ticket['updated_on'], "%Y-%m-%dT%H:%M:%S.%fZ")).days > 15:
-                inactive_tickets.append(ticket)
-            if ticket['status_id'] == 30 or ticket['status_id'] == 40:
-                waiting_tickets.append(ticket)
-    created_1d = 0
-    created_30d = 0
-    closed_1d = 0
-    closed_30d = 0
 
-    for ticket in all_tickets.values():
-        # if ticket was created today
-        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['created_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=1):
-            created_1d += 1
+            if ticket['ticket_queue_id'] == 162232:
+                hd_tickets.append(ticket)
+                if ticket['status_id'] == 10:
+                    activehd_tickets.append(ticket)
 
-        # if ticket was created in last 30 days
-        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['created_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=30):
-            created_30d += 1
+            if ticket['ticket_queue_id'] == 175427:
+                project_tickets.append(ticket)
 
-        # if ticket was closed today
-        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=1):
-            closed_1d += 1
+            if ticket['ticket_queue_id'] == 173389:
+                internalproject_tickets.append(ticket)
 
-        # if ticket was closed in last 30 days
-        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=30):
-            closed_30d += 1
+        # if ticket was created in the last week
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['created_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=7):
+            created_7d += 1
+        # if ticket was closed in the last week
+        if (datetime.now(timezone.utc) - datetime.fromisoformat(ticket['closed_on'] or '1970-01-01T12:00:00Z')) < timedelta(days=7):
+            closed_7d += 1
 
     try:
-        kill_ratio_1d = round(closed_1d/created_1d, 2)
+        kill_ratio = round(closed_7d/created_7d, 2)
     except:
-        kill_ratio_1d = closed_1d
-    try:
-        kill_ratio_30d = round(closed_30d/created_30d, 2)
-    except:
-        kill_ratio_30d = closed_1d
+        kill_ratio = closed_7d
 
     agents = api.kaseya.get_agents()
     patches = api.kaseya.get_patches()
@@ -220,7 +212,7 @@ def index():
 
     for incident in huntress_incidents:
         if incident['closed_at']:
-            date = datetime.fromisoformat(incident['closed_at'] or '1970-01-01T12:00:00Z')
+            # date = datetime.fromisoformat(incident['closed_at'] or '1970-01-01T12:00:00Z')
             comp = datetime.now(timezone.utc) - datetime.fromisoformat(incident['closed_at'] or '1970-01-01T12:00:00Z')
             if comp < timedelta(days=7):
                 huntress_incidents_resolved_7d += 1
@@ -270,26 +262,16 @@ def index():
     return render_template("html/index.html",
         open_tickets=len(open_tickets),
         unassigned_tickets=len(unassigned_tickets),
-        inactive_tickets=len(inactive_tickets),
-        waiting_tickets=len(waiting_tickets),
-        open_tickets_json=json.dumps(open_tickets),
-        unassigned_tickets_json=json.dumps(unassigned_tickets),
-        inactive_tickets_json=json.dumps(inactive_tickets),
-        waiting_tickets_json=json.dumps(waiting_tickets),
-        users=json.dumps(all_users),
-        groups=json.dumps(all_groups),
-        kill_ratio_1d=kill_ratio_1d,
-        kill_ratio_30d=kill_ratio_30d,
+        hd_tickets=len(hd_tickets),
+        project_tickets=len(project_tickets),
+        internalproject_tickets=len(internalproject_tickets),
+        activehd_tickets=len(activehd_tickets),
+        kill_ratio=kill_ratio,
         all_agents=json.dumps(agents),
         inactive_agents=len(inactive_agents),
-        inactive_agents_json=json.dumps(inactive_agents),
         ood_agents=len(ood_agents),
-        ood_agents_json=json.dumps(ood_agents),
         critical_agents=len(critical_agents),
-        critical_agents_json=json.dumps(critical_agents),
         recent_alarms=len(recent_alarms),
-        recent_alarms_json=json.dumps(recent_alarms),
-        jobs_json=json.dumps(jobs),
         jobs_statuses=json.dumps(jobs_statuses),
         device_counts=json.dumps(device_counts),
         ruon_statuses=json.dumps(ruon_statuses),
