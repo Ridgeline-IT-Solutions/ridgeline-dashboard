@@ -157,6 +157,7 @@ def index():
     project_tickets = []
     internalproject_tickets = []
     activehd_tickets = []
+    activeproject_tickets = []
     
     created_7d = 0
     closed_7d = 0
@@ -175,6 +176,8 @@ def index():
 
             if ticket['ticket_queue_id'] == 175427:
                 project_tickets.append(ticket)
+                if ticket['status_id'] == 10:
+                    activeproject_tickets.append(ticket)
 
             if ticket['ticket_queue_id'] == 173389:
                 internalproject_tickets.append(ticket)
@@ -266,6 +269,7 @@ def index():
         project_tickets=len(project_tickets),
         internalproject_tickets=len(internalproject_tickets),
         activehd_tickets=len(activehd_tickets),
+        activeproject_tickets=len(activeproject_tickets),
         kill_ratio=kill_ratio,
         all_agents=json.dumps(agents),
         inactive_agents=len(inactive_agents),

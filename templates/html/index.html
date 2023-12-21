@@ -85,7 +85,15 @@
                 Active Help Desk
             </span>
             <span class="statistic-container-data">
-                <script>document.write(conditionalColor({{ activehd_tickets }}, 0.8, 1.0, true));</script>
+                <script>document.write(conditionalColor({{ activehd_tickets }}, {{ hd_tickets }}/3, {{ hd_tickets }}/2, true));</script>
+            </span>
+        </div>
+        <div class="statistic-container">
+            <span class="statistic-container-header">
+                Active Projects
+            </span>
+            <span class="statistic-container-data">
+                <script>document.write(conditionalColor({{ activeproject_tickets }}, {{project_tickets}}/3, {{ project_tickets }}/2, true));</script>
             </span>
         </div>
         <div class="statistic-container">
